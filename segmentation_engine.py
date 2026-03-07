@@ -1,263 +1,287 @@
 # segmentation_engine.py
 # ─────────────────────────────────────────────────────────────
-# Generates: user_segments.csv
+# Generates: user_segments.csv — NO LLM, fully deterministic.
 #
-# MECE segmentation approach:
-#   1. Compute derived signals (activeness, churn risk, propensities)
-#   2. Apply rule-based MECE logic to assign each user to exactly
-#      one segment (no overlap, full coverage)
-#   3. Use LLM to generate rich segment descriptions + strategy
-#   4. Merge descriptions back onto per-user CSV
+# DOMAIN AGNOSTIC:
+#   - Propensity columns are discovered dynamically from the CSV
+#     (any feature_* column → propensity_<feature_name>)
+#   - Segment rules use activeness_score + lifecycle_stage +
+#     dominant_propensity (whichever propensity_* col is highest)
+#   - No feature names hardcoded anywhere
+#
+# Segmentation logic:
+#   Step 1 — Compute activeness_score, churn_risk, propensities
+#             (done in data_loader.add_derived_signals)
+#   Step 2 — Find each user's dominant_propensity dynamically
+#   Step 3 — Assign activeness band: high / moderate / low
+#   Step 4 — Split each band by lifecycle_stage
+#   Step 5 — Within each lifecycle×band cell, sub-split by
+#             dominant_propensity rank
+#   Step 6 — Compute all metadata from data statistics
+#   Step 7 — Output sorted by segment_id
+#
+# Segments (13 MECE + 1 catch-all):
+#   HIGH (≥0.7):      SEG_01 top-propensity paid, SEG_02 other paid,
+#                     SEG_03 high trial
+#   MODERATE (0.4–0.7): SEG_04 high-propensity paid, SEG_05 low-propensity paid,
+#                       SEG_06 motivated trial, SEG_07 low-motivation trial
+#   LOW (<0.4):       SEG_08 paid, SEG_09 trial,
+#                     SEG_10 recent churned (<45d), SEG_11 deep churned (≥45d),
+#                     SEG_12 inactive high-propensity, SEG_13 inactive low-propensity
+#   CATCH-ALL:        SEG_14 Unclassified
 # ─────────────────────────────────────────────────────────────
 
 import pandas as pd
-from llm import llm, safe_parse_json, save_csv
-from data_loader import load_data, add_derived_signals, build_data_summary
-from kb_loader   import build_context
-from config import OCTOLYSIS_DRIVES
+from llm         import save_csv
+from data_loader import load_data, add_derived_signals
 
 
-# ── Segment definitions (MECE rules) ─────────────────────────
-# Priority order matters — first matching rule wins.
-# Together they cover every possible user row.
+# ── Octolysis drive lookup keyed by segment_id ────────────────
+# These are strategy defaults — not domain-specific feature names.
 
-SEGMENT_RULES = [
-    {
-        "segment_id":   "SEG_01",
-        "name":         "Power Learners",
-        "description":  "Highly active paid users, strong streak, AI tutor engaged",
-        "rule":         lambda r: (
-            r["lifecycle_stage"] == "paid" and
-            r["activeness_score"] >= 0.7 and
-            r["feature_ai_tutor_used"]
-        ),
-    },
-    {
-        "segment_id":   "SEG_02",
-        "name":         "Streak Guardians",
-        "description":  "Active paid users with long streaks and gamification focus",
-        "rule":         lambda r: (
-            r["lifecycle_stage"] == "paid" and
-            r["activeness_score"] >= 0.5 and
-            r["streak_current"] >= 7
-        ),
-    },
-    {
-        "segment_id":   "SEG_03",
-        "name":         "Social Climbers",
-        "description":  "Leaderboard-engaged users who respond to competition",
-        "rule":         lambda r: (
-            r["lifecycle_stage"] in ["paid", "trial"] and
-            r["feature_leaderboard_viewed"] and
-            r["propensity_social"] >= 0.5
-        ),
-    },
-    {
-        "segment_id":   "SEG_04",
-        "name":         "Trial Activators",
-        "description":  "Trial users with high motivation who haven't converted yet",
-        "rule":         lambda r: (
-            r["lifecycle_stage"] == "trial" and
-            r["motivation_score"] >= 0.5
-        ),
-    },
-    {
-        "segment_id":   "SEG_05",
-        "name":         "Trial Fence-Sitters",
-        "description":  "Trial users with low activity — at risk of not converting",
-        "rule":         lambda r: (
-            r["lifecycle_stage"] == "trial" and
-            r["activeness_score"] < 0.5
-        ),
-    },
-    {
-        "segment_id":   "SEG_06",
-        "name":         "Casual Paid Users",
-        "description":  "Paid users with moderate activity — habit not yet formed",
-        "rule":         lambda r: (
-            r["lifecycle_stage"] == "paid" and
-            r["activeness_score"] >= 0.3 and
-            r["activeness_score"] < 0.7
-        ),
-    },
-    {
-        "segment_id":   "SEG_07",
-        "name":         "At-Risk Paid",
-        "description":  "Paid users with very low activity — high churn risk",
-        "rule":         lambda r: (
-            r["lifecycle_stage"] == "paid" and
-            r["activeness_score"] < 0.3
-        ),
-    },
-    {
-        "segment_id":   "SEG_08",
-        "name":         "Recent Churned",
-        "description":  "Churned users still within winback window (< 45 days)",
-        "rule":         lambda r: (
-            r["lifecycle_stage"] == "churned" and
-            r["days_since_signup"] < 45
-        ),
-    },
-    {
-        "segment_id":   "SEG_09",
-        "name":         "Deep Churned",
-        "description":  "Long-gone churned users requiring strong re-engagement",
-        "rule":         lambda r: (
-            r["lifecycle_stage"] == "churned" and
-            r["days_since_signup"] >= 45
-        ),
-    },
-    {
-        "segment_id":   "SEG_10",
-        "name":         "Inactive Sleepers",
-        "description":  "Inactive users — not using app but not explicitly churned",
-        "rule":         lambda r: r["lifecycle_stage"] == "inactive",
-    },
-    # Catch-all — ensures MECE completeness
-    {
-        "segment_id":   "SEG_11",
-        "name":         "Unclassified",
-        "description":  "Users not matching any primary segment",
-        "rule":         lambda r: True,
-    },
-]
+SEGMENT_META = {
+    "SEG_01": ("Accomplishment",   "Empowerment",      "motivating",    "Deepen top-feature usage with personalised challenges and milestone badges.",              "Maximise W1 exercise completion through feature-led daily challenges."),
+    "SEG_02": ("Loss Avoidance",   "Ownership",        "competitive",   "Protect engagement with streak reminders and ownership of progress assets.",               "Increase monthly retention via streak continuity."),
+    "SEG_03": ("Scarcity",         "Empowerment",      "urgent-warm",   "Create urgency around trial expiry; highlight transformation stories to convert.",          "Convert trial to paid by demonstrating value within D0-D7."),
+    "SEG_04": ("Ownership",        "Unpredictability", "encouraging",   "Nudge toward daily habit with feature-specific rewards and coin incentives.",               "Build exercise habit to improve W1 retention post-conversion."),
+    "SEG_05": ("Unpredictability", "Loss Avoidance",   "friendly",      "Re-ignite curiosity through surprise content and unpredictable reward drops.",              "Increase session frequency to cross habit-formation threshold."),
+    "SEG_06": ("Scarcity",         "Epic Meaning",     "motivating",    "Reinforce conversion intent with scarcity messaging and quick-win exercises.",              "Accelerate trial-to-paid conversion with urgency messaging."),
+    "SEG_07": ("Empowerment",      "Unpredictability", "curious",       "Lower friction with shorter sessions and empowerment-focused choice messaging.",            "Reduce trial drop-off by raising curiosity and lowering entry barrier."),
+    "SEG_08": ("Loss Avoidance",   "Epic Meaning",     "concerned",     "Send loss-avoidance alerts for streak and progress; offer a re-engagement bonus.",          "Prevent paid churn by reactivating before 30-day inactivity mark."),
+    "SEG_09": ("Scarcity",         "Empowerment",      "urgent-warm",   "Send a single high-impact trial expiry message; offer an easy entry-point lesson.",         "Salvage trial conversion with a decisive last-chance intervention."),
+    "SEG_10": ("Epic Meaning",     "Loss Avoidance",   "empathetic",    "Use empathetic win-back narrative; remind of progress made before churning.",               "Win back recently churned users before they become deep churned."),
+    "SEG_11": ("Epic Meaning",     "Empowerment",      "gentle",        "Lead with epic meaning and career transformation; avoid pressure-heavy tones.",             "Attempt re-acquisition through brand story and aspiration hooks."),
+    "SEG_12": ("Loss Avoidance",   "Unpredictability", "warm",          "Gentle streak-loss warning with a feature-specific re-entry prompt for engaged users.",     "Reactivate high-propensity inactive users before permanent churn."),
+    "SEG_13": ("Epic Meaning",     "Scarcity",         "neutral-warm",  "Broader re-engagement appeal with low-friction entry point and aspirational messaging.",    "Reactivate low-propensity inactive users; recover monthly retention numbers."),
+    "SEG_14": ("Accomplishment",   "Epic Meaning",     "neutral",       "Apply default balanced engagement strategy; monitor for better segment fit.",               "Drive exercise completion; reclassify as data accumulates."),
+}
+
+SEGMENT_NAMES = {
+    "SEG_01": "High-Active Power Users",
+    "SEG_02": "High-Active Streak Keepers",
+    "SEG_03": "High-Active Trial Converters",
+    "SEG_04": "Moderate-Active Feature Enthusiasts",
+    "SEG_05": "Moderate-Active Casual Paid",
+    "SEG_06": "Moderate-Active Trial Activators",
+    "SEG_07": "Moderate-Active Trial Fence-Sitters",
+    "SEG_08": "Low-Active At-Risk Paid",
+    "SEG_09": "Low-Active Cold Trial",
+    "SEG_10": "Recent Churned",
+    "SEG_11": "Deep Churned",
+    "SEG_12": "Inactive High-Propensity",
+    "SEG_13": "Inactive Low-Propensity",
+    "SEG_14": "Unclassified",
+}
 
 
-def _assign_segment(row: pd.Series) -> tuple[str, str]:
-    """Return (segment_id, segment_name) for a single user row."""
-    for seg in SEGMENT_RULES:
-        try:
-            if seg["rule"](row):
-                return seg["segment_id"], seg["name"]
-        except Exception:
-            continue
-    return "SEG_11", "Unclassified"
+# ── Dynamic propensity helpers ────────────────────────────────
+
+def _get_propensity_cols(df: pd.DataFrame) -> list:
+    """Return all propensity_* columns present in the DataFrame."""
+    return [c for c in df.columns if c.startswith("propensity_")]
 
 
-def _gen_segment_metadata(df_seg: pd.DataFrame, seg_def: dict, data_summary: str) -> dict:
-    """One LLM call to produce rich metadata for a segment."""
-    n      = len(df_seg)
-    stages = df_seg["lifecycle_stage"].value_counts().to_dict()
-    avg_act = round(df_seg["activeness_score"].mean(), 3)
-    avg_churn = round(df_seg["churn_risk_score"].mean(), 3)
-    avg_motiv = round(df_seg["motivation_score"].mean(), 3)
+def _dominant_propensity(row: pd.Series, prop_cols: list) -> tuple:
+    """
+    Return (dominant_propensity_name, score) for a single row.
+    Works with any number of propensity_* columns — fully dynamic.
+    """
+    if not prop_cols:
+        return "none", 0.0
+    scores = {col: row[col] for col in prop_cols}
+    dom_col = max(scores, key=scores.get)
+    return dom_col.replace("propensity_", ""), round(scores[dom_col], 3)
 
-    drives_list = ", ".join(d["name"] for d in OCTOLYSIS_DRIVES)
 
-    raw = llm(
-        system="You are a product segmentation expert. Output ONLY valid JSON.",
-        prompt=f"""
-Segment: {seg_def['name']} (id: {seg_def['segment_id']})
-Description: {seg_def['description']}
-Users in segment: {n}
-Lifecycle stages: {stages}
-Avg activeness_score: {avg_act}
-Avg churn_risk_score: {avg_churn}
-Avg motivation_score: {avg_motiv}
+def _add_dominant_propensity(df: pd.DataFrame) -> pd.DataFrame:
+    """Add dominant_propensity and dominant_propensity_score columns."""
+    prop_cols = _get_propensity_cols(df)
+    if not prop_cols:
+        df["dominant_propensity"]       = "none"
+        df["dominant_propensity_score"] = 0.0
+        return df
 
-Octolysis drives available: {drives_list}
-
-{data_summary}
-
-Generate metadata for this segment. Return ONLY valid JSON:
-{{
-  "primary_octolysis_drive": "<most relevant drive name>",
-  "secondary_octolysis_drive": "<second most relevant>",
-  "key_behaviour_signal": "<1 sentence: what makes this segment distinct in the data>",
-  "recommended_tone": "<1-2 word tone>",
-  "communication_strategy": "<2-3 sentence strategy for this segment>",
-  "north_star_lever": "<how this segment contributes to north star metric>"
-}}"""
+    results = df.apply(
+        lambda r: pd.Series(_dominant_propensity(r, prop_cols)),
+        axis=1
     )
-    return safe_parse_json(raw, fallback={
-        "primary_octolysis_drive":   "Accomplishment",
-        "secondary_octolysis_drive": "Loss Avoidance",
-        "key_behaviour_signal":      seg_def["description"],
-        "recommended_tone":          "motivating",
-        "communication_strategy":    f"Focus on {seg_def['description'].lower()} to drive engagement.",
-        "north_star_lever":          "Increase exercises completed per week",
-    })
+    results.columns = ["dominant_propensity", "dominant_propensity_score"]
+    return pd.concat([df, results], axis=1)
 
 
-def gen_user_segments(df=None, output_dir: str = None) -> pd.DataFrame:
+# ── Segment assignment ────────────────────────────────────────
+
+def _assign_segment(row: pd.Series) -> str:
     """
-    Assign all users to MECE segments and output user_segments.csv.
-
-    Args:
-        df          : pre-loaded DataFrame (optional)
-        output_dir  : override output directory (optional)
+    Assign a segment_id based on activeness band + lifecycle stage.
+    Uses dominant_propensity to further split within paid segments.
+    All logic is data-driven — no feature names hardcoded.
     """
-    print("\n[4/5] Generating: user_segments.csv")
+    act   = row["activeness_score"]
+    stage = row["lifecycle_stage"]
+    dom_score = row.get("dominant_propensity_score", 0)
+
+    # ── HIGH band ────────────────────────────────────────────
+    if act >= 0.7:
+        if stage == "paid":
+            # Split by whether user has a strong dominant propensity
+            return "SEG_01" if dom_score >= 0.6 else "SEG_02"
+        if stage == "trial":
+            return "SEG_03"
+
+    # ── MODERATE band ────────────────────────────────────────
+    elif act >= 0.4:
+        if stage == "paid":
+            return "SEG_04" if dom_score >= 0.4 else "SEG_05"
+        if stage == "trial":
+            return "SEG_06" if row.get("motivation_score", 0) >= 0.5 else "SEG_07"
+
+    # ── LOW band ─────────────────────────────────────────────
+    else:
+        if stage == "paid":
+            return "SEG_08"
+        if stage == "trial":
+            return "SEG_09"
+        if stage == "churned":
+            return "SEG_10" if row.get("days_since_signup", 999) < 45 else "SEG_11"
+        if stage == "inactive":
+            return "SEG_12" if dom_score >= 0.4 else "SEG_13"
+
+    return "SEG_14"  # catch-all
+
+
+# ── Key behaviour signal (pure statistics) ────────────────────
+
+def _key_signal(df_seg: pd.DataFrame, prop_cols: list) -> str:
+    avg_act   = df_seg["activeness_score"].mean()
+    avg_churn = df_seg["churn_risk_score"].mean()
+    avg_motiv = df_seg["motivation_score"].mean() if "motivation_score" in df_seg.columns else 0
+
+    # Find dominant propensity by average across segment (dynamic)
+    if prop_cols:
+        prop_avgs = {c.replace("propensity_", ""): df_seg[c].mean() for c in prop_cols}
+        dom = max(prop_avgs, key=prop_avgs.get)
+        dom_val = prop_avgs[dom]
+        prop_str = f"dominant propensity: {dom} ({dom_val:.2f})"
+    else:
+        prop_str = "no feature propensity data"
+
+    stage_dist = df_seg["lifecycle_stage"].value_counts().to_dict()
+    top_stage  = max(stage_dist, key=stage_dist.get)
+
+    return (
+        f"{top_stage.capitalize()} users — activeness {avg_act:.2f}, "
+        f"churn risk {avg_churn:.2f}, motivation {avg_motiv:.2f}; {prop_str}."
+    )
+
+
+# ── Main entry point ──────────────────────────────────────────
+
+def gen_user_segments(df=None, output_dir: str = None):
+    """
+    Assign all users to MECE segments. No LLM — fully deterministic.
+    Propensity columns are discovered dynamically from the DataFrame.
+
+    Returns:
+        user_seg_df    : per-user DataFrame sorted by segment_id
+        seg_summary_df : per-segment summary sorted by segment_id
+    """
+    print("\n[4/5] Generating: user_segments.csv  (no LLM — pure feature extraction)")
 
     if df is None:
         df = load_data()
 
     df = add_derived_signals(df)
-    # Build context = KB (target audience, journey stages, features) + data summary
-    # KB's "Target Audience profiles" directly informs segment descriptions and strategy
-    data_summary = build_context(build_data_summary(df))
 
-    # Assign segment to each user
-    print("  [rule] Applying MECE segment rules ...")
-    segments = df.apply(_assign_segment, axis=1, result_type="expand")
-    segments.columns = ["segment_id", "segment_name"]
-    df = pd.concat([df, segments], axis=1)
+    # Discover propensity columns (whatever feature_* cols exist in this CSV)
+    prop_cols = _get_propensity_cols(df)
+    print(f"  [seg] Propensity columns found: {[c.replace('propensity_','') for c in prop_cols]}")
 
-    seg_counts = df["segment_id"].value_counts().to_dict()
-    print(f"  [rule] Segment distribution: {seg_counts}")
+    # Add dominant propensity per user
+    df = _add_dominant_propensity(df)
 
-    # Build per-segment metadata via LLM
-    seg_meta_rows = []
-    unique_segs   = df[["segment_id", "segment_name"]].drop_duplicates().sort_values("segment_id")
+    # Assign segment
+    print("  [seg] Assigning MECE segments ...")
+    df["segment_id"]   = df.apply(_assign_segment, axis=1)
+    df["segment_name"] = df["segment_id"].map(SEGMENT_NAMES).fillna("Unclassified")
 
-    for _, row in unique_segs.iterrows():
-        sid  = row["segment_id"]
-        name = row["segment_name"]
-        seg_def = next((s for s in SEGMENT_RULES if s["segment_id"] == sid), {
-            "segment_id": sid, "name": name, "description": name
-        })
-        df_seg = df[df["segment_id"] == sid]
-        print(f"  [llm] Generating metadata for {sid}: {name} (n={len(df_seg)})")
-        meta = _gen_segment_metadata(df_seg, seg_def, data_summary)
+    # Activeness band label
+    df["activeness_band"] = pd.cut(
+        df["activeness_score"],
+        bins=[-0.001, 0.4, 0.7, 1.001],
+        labels=["low", "moderate", "high"]
+    ).astype(str)
 
-        seg_meta_rows.append({
-            "segment_id":               sid,
-            "segment_name":             name,
-            "user_count":               len(df_seg),
-            "lifecycle_stages":         "|".join(sorted(df_seg["lifecycle_stage"].unique())),
-            "avg_activeness_score":     round(df_seg["activeness_score"].mean(), 3),
-            "avg_churn_risk_score":     round(df_seg["churn_risk_score"].mean(), 3),
-            "avg_propensity_gamif":     round(df_seg["propensity_gamification"].mean(), 3),
-            "avg_propensity_ai_tutor":  round(df_seg["propensity_ai_tutor"].mean(), 3),
-            "avg_propensity_social":    round(df_seg["propensity_social"].mean(), 3),
-            "primary_octolysis_drive":  meta.get("primary_octolysis_drive", "Accomplishment"),
-            "secondary_octolysis_drive":meta.get("secondary_octolysis_drive", "Loss Avoidance"),
-            "key_behaviour_signal":     meta.get("key_behaviour_signal", ""),
-            "recommended_tone":         meta.get("recommended_tone", "motivating"),
-            "communication_strategy":   meta.get("communication_strategy", ""),
-            "north_star_lever":         meta.get("north_star_lever", ""),
-        })
+    seg_counts = df["segment_id"].value_counts().sort_index().to_dict()
+    print(f"  [seg] Distribution: {seg_counts}")
 
-    seg_summary_df = pd.DataFrame(seg_meta_rows)
+    # ── Per-segment summary (pure stats) ─────────────────────
+    seg_rows = []
+    for sid in sorted(df["segment_id"].unique()):
+        df_s  = df[df["segment_id"] == sid]
+        name  = SEGMENT_NAMES.get(sid, "Unclassified")
+        meta  = SEGMENT_META.get(sid, ("Accomplishment", "Epic Meaning", "neutral",
+                                       "Apply default strategy.", "Drive exercise completion."))
+        primary_drive, secondary_drive, tone, strategy, ns_lever = meta
 
-    # Merge segment columns onto full user DataFrame
-    user_seg_df = df[[
-        "user_id", "lifecycle_stage", "days_since_signup", "age_band", "region",
-        "activeness_score", "churn_risk_score",
-        "propensity_gamification", "propensity_ai_tutor", "propensity_social",
-        "segment_id", "segment_name",
-    ]].copy()
+        # Per-propensity averages (dynamic — works for any number of features)
+        prop_avgs = {c: round(df_s[c].mean(), 3) for c in prop_cols}
 
-    # Add communication metadata per user from segment summary
-    user_seg_df = user_seg_df.merge(
-        seg_summary_df[[
-            "segment_id", "primary_octolysis_drive", "secondary_octolysis_drive",
-            "recommended_tone", "communication_strategy",
-        ]],
-        on="segment_id", how="left"
-    )
+        row_dict = {
+            "segment_id":                sid,
+            "segment_name":              name,
+            "activeness_band":           df_s["activeness_band"].mode()[0] if len(df_s) else "low",
+            "user_count":                len(df_s),
+            "lifecycle_stages":          "|".join(sorted(df_s["lifecycle_stage"].unique())),
+            "avg_activeness_score":      round(df_s["activeness_score"].mean(), 3),
+            "avg_churn_risk_score":      round(df_s["churn_risk_score"].mean(), 3),
+            "avg_motivation_score":      round(df_s["motivation_score"].mean(), 3) if "motivation_score" in df_s.columns else None,
+            "dominant_propensity":       df_s["dominant_propensity"].mode()[0] if len(df_s) else "none",
+            "primary_octolysis_drive":   primary_drive,
+            "secondary_octolysis_drive": secondary_drive,
+            "recommended_tone":          tone,
+            "key_behaviour_signal":      _key_signal(df_s, prop_cols),
+            "communication_strategy":    strategy,
+            "north_star_lever":          ns_lever,
+        }
+        # Add per-feature propensity averages dynamically
+        row_dict.update({f"avg_{c}": v for c, v in prop_avgs.items()})
+        seg_rows.append(row_dict)
+
+    seg_summary_df = pd.DataFrame(seg_rows).sort_values("segment_id").reset_index(drop=True)
+
+    # ── Per-user output ───────────────────────────────────────
+    # Keep only essential columns — no raw behavioral noise.
+    # Individual propensity_* columns are dropped; only the
+    # dominant_propensity name + score are kept (single summary
+    # signal regardless of how many features exist in the CSV).
+    core_cols = [
+        "segment_id",
+        "segment_name",
+        "user_id",
+        "lifecycle_stage",
+        "age_band",
+        "region",
+        "activeness_score",
+        "churn_risk_score",
+        "activeness_band",
+        "dominant_propensity",
+        "dominant_propensity_score",
+    ]
+
+    user_seg_df = df[[c for c in core_cols if c in df.columns]].copy()
+
+    # Sort by segment_id then user_id
+    user_seg_df = user_seg_df.sort_values(["segment_id", "user_id"]).reset_index(drop=True)
 
     save_csv(user_seg_df, "user_segments.csv", output_dir)
 
-    # Also return the segment summary df for downstream use
+    print(f"  [seg] {len(user_seg_df)} users across {len(seg_summary_df)} segments")
+    for _, r in seg_summary_df.iterrows():
+        print(
+            f"    {r['segment_id']}  {r['segment_name']:35s} "
+            f"n={r['user_count']:3d}  act={r['avg_activeness_score']:.2f}  "
+            f"band={r['activeness_band']}  dominant={r['dominant_propensity']}"
+        )
+
     return user_seg_df, seg_summary_df

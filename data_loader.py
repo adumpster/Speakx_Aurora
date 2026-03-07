@@ -105,22 +105,34 @@ def add_derived_signals(df: pd.DataFrame) -> pd.DataFrame:
         0.20 * low_streak    + 0.20 * low_notif
     ).round(3)
 
-    # gamification_propensity (aliased as propensity_gamification too)
-    coins_norm = df["coins_balance"].clip(0, 1000) / 1000
-    lb_flag    = df["feature_leaderboard_viewed"].astype(float) if "feature_leaderboard_viewed" in df.columns else 0
-    df["gamification_propensity"] = (0.4 * streak_n + 0.3 * coins_norm + 0.3 * lb_flag).round(3)
-    df["propensity_gamification"] = df["gamification_propensity"]
+    # ── Domain-agnostic propensities ─────────────────────────────────────────
+    # Auto-discover every feature_* boolean column in the CSV.
+    # propensity_<feature_name> = 0.6 * usage_flag + 0.4 * motivation_score
+    #
+    # Formula rationale:
+    #   60% usage signal  — did the user actually engage with this feature?
+    #   40% motivation    — general receptiveness / intent to engage
+    #
+    # Domain agnosticism:
+    #   No feature names are hardcoded. Swap the CSV for any domain and
+    #   all propensity columns auto-adapt to whatever feature_* cols exist.
+    #   e.g. feature_ai_tutor_used      → propensity_ai_tutor_used
+    #        feature_leaderboard_viewed  → propensity_leaderboard_viewed
+    #        feature_checkout_completed  → propensity_checkout_completed  (FinTech)
+    #        feature_report_viewed       → propensity_report_viewed       (SaaS)
 
-    # ai_tutor_propensity
-    tutor_flag = df["feature_ai_tutor_used"].astype(float) if "feature_ai_tutor_used" in df.columns else 0
-    motiv_norm = df["motivation_score"].clip(0, 1)
-    df["ai_tutor_propensity"]  = (0.6 * tutor_flag + 0.4 * motiv_norm).round(3)
-    df["propensity_ai_tutor"]  = df["ai_tutor_propensity"]
+    motiv_norm   = df["motivation_score"].clip(0, 1) if "motivation_score" in df.columns else pd.Series(0.5, index=df.index)
+    feature_cols = [c for c in df.columns if c.startswith("feature_")]
 
-    # social_propensity / leaderboard_propensity
-    df["leaderboard_propensity"] = lb_flag
-    df["social_propensity"]      = (0.7 * lb_flag + 0.3 * motiv_norm).round(3)
-    df["propensity_social"]      = df["social_propensity"]
+    for col in feature_cols:
+        feature_name = col[len("feature_"):]        # strip "feature_" prefix
+        prop_col     = f"propensity_{feature_name}" # propensity_ai_tutor_used etc.
+        usage_flag   = df[col].astype(float)
+        df[prop_col] = (0.6 * usage_flag + 0.4 * motiv_norm).round(3)
+
+    # Fallback: if no feature_* columns exist, add a generic engagement propensity
+    if not feature_cols:
+        df["propensity_engagement"] = motiv_norm.round(3)
 
     return df
 
