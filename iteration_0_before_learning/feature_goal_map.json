@@ -1,0 +1,70 @@
+{
+  "feature_goal_map": [
+    {
+      "feature": "AI Tutor",
+      "feature_id": "feat_001",
+      "description": "Real-time conversational AI English teacher for users to practice speaking and receive instant feedback on pronunciation, grammar, and fluency.",
+      "lifecycle_stage": [
+        "inactive",
+        "paid",
+        "trial"
+      ],
+      "primary_goal": "Drive habit formation through daily Sia conversations and improve user retention.",
+      "sub_goals": [
+        "Increase exercise completion rate among trial users",
+        "Boost streaks in paid users"
+      ],
+      "north_star_contribution": "Improves Monthly Retention by encouraging users to complete at least one exercise within the month",
+      "propensity_levers": [
+        "Personalized win-back content for inactive users",
+        "Upselling annual plan to paid users"
+      ],
+      "expected_outcome": "Increase monthly retention rate among trial and paid users by 10% within the next quarter"
+    },
+    {
+      "feature": "Leaderboard Viewed",
+      "feature_id": "feat_002",
+      "description": "Viewing the leaderboard on a regular basis to stay competitive and track progress.",
+      "lifecycle_stage": [
+        "churned",
+        "inactive",
+        "paid",
+        "trial"
+      ],
+      "primary_goal": "Stay motivated and engaged with the app by regularly viewing the leaderboard.",
+      "sub_goals": [
+        "Staying up-to-date with friends' progress",
+        "Tracking personal ranking"
+      ],
+      "north_star_contribution": "<how it moves Monthly Retention>",
+      "propensity_levers": [
+        "Social Proof",
+        "Competition"
+      ],
+      "expected_outcome": "Increased likelihood of staying active in the app"
+    },
+    {
+      "feature": "Progress Reports",
+      "feature_id": "feat_004",
+      "description": "Weekly and monthly progress reports show user's performance, streak history, and comparative ranking.",
+      "lifecycle_stage": [
+        "churned",
+        "paid",
+        "trial"
+      ],
+      "primary_goal": "Drive habit formation — at least 4 sessions/week.",
+      "sub_goals": [
+        "Show user their progress",
+        "Encourage users to continue practicing"
+      ],
+      "north_star_contribution": "W1 Retention — The percentage of trial users who complete an exercise in Week 1 post-conversion",
+      "propensity_levers": [
+        "Personalized win-back content",
+        "Nostalgia framing"
+      ],
+      "expected_outcome": "Increase W1 Retention by 10%"
+    }
+  ],
+  "generated_at": "2026-03-07",
+  "iteration": 0
+}

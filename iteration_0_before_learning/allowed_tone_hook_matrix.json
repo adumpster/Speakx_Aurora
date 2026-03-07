@@ -1,0 +1,161 @@
+{
+  "matrix": [
+    {
+      "lifecycle_stage": "trial",
+      "allowed_tones": [
+        "Motivational",
+        "Encouraging"
+      ],
+      "disallowed_tones": [
+        "Shaming",
+        "Aggressive sales pressure"
+      ],
+      "primary_drives": [
+        "Epic Meaning",
+        "Accomplishment",
+        "Empowerment"
+      ],
+      "secondary_drives": [
+        "Ownership",
+        "Social Influence"
+      ],
+      "hook_intensity": "high",
+      "tone_rationale": "Grounded in KB guidelines and behavioral data, motivational tones encourage users to activate their habits and feel a sense of accomplishment."
+    },
+    {
+      "lifecycle_stage": "paid",
+      "allowed_tones": [
+        "Motivational",
+        "Encouraging",
+        "Celebratory"
+      ],
+      "disallowed_tones": [
+        "Shaming",
+        "Aggressive sales pressure"
+      ],
+      "primary_drives": [
+        "Epic Meaning",
+        "Accomplishment",
+        "Empowerment"
+      ],
+      "secondary_drives": [
+        "Ownership",
+        "Social Influence"
+      ],
+      "hook_intensity": "high",
+      "tone_rationale": "Motivational tones drive retention and feature depth, while celebratory tones acknowledge users' progress."
+    },
+    {
+      "lifecycle_stage": "churned",
+      "allowed_tones": [
+        "Friendly",
+        "Informative"
+      ],
+      "disallowed_tones": [
+        "Shaming",
+        "Aggressive sales pressure"
+      ],
+      "primary_drives": [
+        "Loss Avoidance"
+      ],
+      "secondary_drives": [
+        "Social Influence"
+      ],
+      "hook_intensity": "low",
+      "tone_rationale": "Friendly tones re-engage users, while informative tones provide context for the win-back process."
+    },
+    {
+      "lifecycle_stage": "inactive",
+      "allowed_tones": [
+        "Friendly",
+        "Informative"
+      ],
+      "disallowed_tones": [
+        "Shaming",
+        "Aggressive sales pressure"
+      ],
+      "primary_drives": [
+        "Loss Avoidance"
+      ],
+      "secondary_drives": [
+        "Social Influence"
+      ],
+      "hook_intensity": "low",
+      "tone_rationale": "Friendly tones reactivate users, while informative tones provide context for the re-engagement process."
+    }
+  ],
+  "hook_taxonomy": [
+    {
+      "core_drive": "Epic Meaning",
+      "application": "Join 1M+ learners transforming their careers and be part of a community that supports your growth.",
+      "example_phrases": [
+        "Join 1M+ learners",
+        "Transform your career"
+      ]
+    },
+    {
+      "core_drive": "Accomplishment",
+      "application": "You completed 5 lessons! Keep the momentum and unlock more content.",
+      "example_phrases": [
+        "Complete 5 lessons",
+        "Unlock more content"
+      ]
+    },
+    {
+      "core_drive": "Empowerment",
+      "application": "Choose your learning path today and take control of your career.",
+      "example_phrases": [
+        "Choose your path",
+        "Take control"
+      ]
+    },
+    {
+      "core_drive": "Ownership",
+      "application": "Your 50 coins are waiting to be spent on premium content and features.",
+      "example_phrases": [
+        "Your coins",
+        "Spent on premium content"
+      ]
+    },
+    {
+      "core_drive": "Social Influence",
+      "application": "3 friends joined this week. Invite more and become part of a supportive community.",
+      "example_phrases": [
+        "Invite more",
+        "Supportive community"
+      ]
+    },
+    {
+      "core_drive": "Scarcity",
+      "application": "Only 2 days left in your trial! Don't miss out on this opportunity to transform your career.",
+      "example_phrases": [
+        "Limited time",
+        "Transform your career"
+      ]
+    },
+    {
+      "core_drive": "Unpredictability",
+      "application": "Surprise reward inside today's lesson! Stay tuned for more exciting content.",
+      "example_phrases": [
+        "Surprise reward",
+        "More exciting content"
+      ]
+    },
+    {
+      "core_drive": "Loss Avoidance",
+      "application": "Your 7-day streak is at risk! Reactivate your account and continue growing.",
+      "example_phrases": [
+        "Streak at risk",
+        "Reactivate now"
+      ]
+    }
+  ],
+  "global_disallowed": [
+    "Shaming",
+    "Aggressive sales pressure"
+  ],
+  "source": "KB Ethical Communication Guidelines",
+  "bilingual_note": "All messages must be available in Hindi and English",
+  "generated_at": "2026-03-07",
+  "iteration": 0
+}

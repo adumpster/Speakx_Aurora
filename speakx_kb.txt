@@ -1,0 +1,88 @@
+# SpeakX - Company Knowledge Base (Project Aurora)
+
+## Company Overview
+SpeakX is an AI-powered English speaking and communication learning app built for Hindi and regional language speakers across India. Our mission is to transform "I understand English but can't speak" into confident, fluent communication through daily guided practice with our AI teacher "Sia".
+
+Founded in 2022, SpeakX currently serves 1.2 million registered users across Tier 1, 2, and 3 cities in India. Our primary audience is working professionals, college students, and ambitious homemakers aged 20-45 who aspire to better jobs, promotions, and social confidence.
+
+## Core Product Features
+
+### 1. AI Tutor - "Sia"
+Sia is our conversational AI English teacher. Users have real-time spoken conversations with Sia on topics like job interviews, office presentations, and daily situations. Sia gives instant feedback on pronunciation, grammar, and fluency. Sessions last 5–15 minutes and adapt to the user's level.
+
+### 2. Gamification System
+- **Coins**: Earned by completing exercises and sessions. Redeemable for premium content unlocks.
+- **Streaks**: Daily streak tracking. 7-day, 30-day, and 100-day streak milestones come with badge rewards.
+- **Leaderboards**: Weekly and monthly leaderboards by city and age group. Top 3 users get featured on community walls.
+- **XP Points**: Experience points track overall progress and determine user rank (Beginner → Intermediate → Advanced → Fluent).
+
+### 3. Role-Based Practice Scenarios
+Users can practice real-world scenarios:
+- Job Interview Prep
+- Office Presentations
+- Phone Call Etiquette
+- Social Situations (meeting new people, networking)
+- Customer Handling (for sales/service professionals)
+
+### 4. Progress Reports
+Weekly and monthly progress reports show:
+- Sessions completed vs. target
+- Pronunciation accuracy improvement (%)
+- Words/phrases learned
+- Streak history
+- Comparative ranking vs. peers in the same city/age band
+
+### 5. Leaderboard & Community
+Social learning layer where users see friends' progress, invite others, and compete in city-level challenges.
+
+## User Lifecycle
+
+### Trial Phase (Day 0 – Day 7)
+- User signs up, completes onboarding, gets 3 free sessions with Sia.
+- Goal: Get user to complete at least 1 exercise, feel the product value, and convert to a paid monthly plan.
+- Key trigger: First "aha moment" — completing a Sia conversation and hearing their feedback.
+- Conversion CTA appears on Day 3 and Day 6 if user hasn't upgraded.
+
+### Paid Monthly Phase (Day 8 – Day 30)
+- User has converted to ₹299/month plan.
+- Goal: Drive habit formation — at least 4 sessions/week.
+- North Star proxy: W1 Retention (exercise completion in week 1 post-conversion).
+- Upsell to annual plan (₹1,999/year) appears at Day 20 if monthly retention is high.
+
+### Churned / Inactive Phase
+- User has not opened app for 14+ days or has not renewed after trial/monthly lapse.
+- Goal: Re-engage with personalized win-back content.
+- Strategy: Nostalgia + progress loss framing + limited-time offer.
+
+## Pricing
+- Free Trial: 7 days, 3 free Sia sessions
+- Monthly Plan: ₹299/month
+- Annual Plan: ₹1,999/year (save 44%)
+- Group Plan (for colleges): ₹4,999 for 25 students
+
+## Communication Philosophy
+SpeakX communicates with warmth, encouragement, and a slight sense of urgency. We never shame users for missing sessions — we celebrate small wins and reframe setbacks as opportunities. Our tone adapts by user segment: motivational for aspirational users, achievement-focused for competitive ones, supportive for anxious beginners.
+
+**Allowed tones**: Motivational, Encouraging, Celebratory, Urgent (mild), Friendly, Informative
+**Disallowed tones**: Shaming, Aggressive sales pressure, Fear-mongering, Condescending
+
+## Key Metrics
+- North Star Metric: Monthly Retention (% of trial→monthly converters who complete an exercise within the month)
+- W1 Retention: % of converters completing an exercise in Week 1 post-conversion
+- Trial→Monthly Conversion Rate: Target 25%
+- DAU/MAU Ratio: Target 0.35+
+- Notification CTR: Target >15% for push notifications
+- Uninstall Rate: Must stay below 2% per segment
+
+## Brand Voice
+- Name of AI Tutor: "Sia" (friendly, encouraging, like a personal coach)
+- Tagline: "Bol ke dikha" (Show it by speaking)
+- Language: Bilingual — Hindi + English in all user-facing communication
+- Persona: Supportive older sibling who believes in you
+
+## Competitive Differentiators
+1. Voice-first practice (not reading/writing focused)
+2. Indian English accent training (not British/American-only)
+3. Vernacular onboarding (Hindi UI option)
+4. Hyper-relevant scenarios for Indian professionals
+5. Affordable pricing for Tier 2/3 users
