@@ -1,0 +1,21 @@
+# Ignore a specific folder (and everything inside it)
+node_modules/
+build/
+
+# Ignore a specific file
+.env
+config.json
+
+# Ignore all files with a specific extension
+*.log
+*.tmp
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore python cache directories
+__pycache__/
+
+# Ignore compiled python files
+*.py[cod]
+*$py.class
