@@ -3,64 +3,64 @@
     {
       "feature": "AI Tutor",
       "feature_id": "feat_001",
-      "description": "Real-time conversational AI English teacher for users to practice speaking and receive instant feedback on pronunciation, grammar, and fluency.",
+      "description": "Conversational AI English teacher for users to practice speaking and get instant feedback on pronunciation, grammar, and fluency.",
       "lifecycle_stage": [
         "inactive",
         "paid",
         "trial"
       ],
-      "primary_goal": "Drive habit formation through daily Sia conversations and improve user retention.",
+      "primary_goal": "Drive habit formation by encouraging daily Sia conversations and providing instant feedback.",
       "sub_goals": [
-        "Increase exercise completion rate among trial users",
-        "Boost streaks in paid users"
+        "Increase exercise completion rate",
+        "Improve user confidence in speaking English"
       ],
-      "north_star_contribution": "Improves Monthly Retention by encouraging users to complete at least one exercise within the month",
+      "north_star_contribution": "Boost Monthly Retention by 10% through increased engagement with the AI Tutor feature",
       "propensity_levers": [
-        "Personalized win-back content for inactive users",
-        "Upselling annual plan to paid users"
+        "Personalized win-back content",
+        "Limited-time offer for premium features"
       ],
-      "expected_outcome": "Increase monthly retention rate among trial and paid users by 10% within the next quarter"
+      "expected_outcome": "Average monthly retention rate of 80% among users who regularly use the AI Tutor feature"
     },
     {
       "feature": "Leaderboard Viewed",
       "feature_id": "feat_002",
-      "description": "Viewing the leaderboard on a regular basis to stay competitive and track progress.",
+      "description": "Feature: leaderboard_viewed",
+      "primary_goal": "Increase engagement",
+      "sub_goals": [
+        "Improve session frequency",
+        "Build habit"
+      ],
+      "north_star_contribution": "Indirect via engagement",
+      "propensity_levers": [
+        "usage_rate",
+        "lifecycle_stage"
+      ],
+      "expected_outcome": "Higher retention rate",
       "lifecycle_stage": [
         "churned",
         "inactive",
         "paid",
         "trial"
-      ],
-      "primary_goal": "Stay motivated and engaged with the app by regularly viewing the leaderboard.",
-      "sub_goals": [
-        "Staying up-to-date with friends' progress",
-        "Tracking personal ranking"
-      ],
-      "north_star_contribution": "<how it moves Monthly Retention>",
-      "propensity_levers": [
-        "Social Proof",
-        "Competition"
-      ],
-      "expected_outcome": "Increased likelihood of staying active in the app"
+      ]
     },
     {
       "feature": "Progress Reports",
-      "feature_id": "feat_004",
-      "description": "Weekly and monthly progress reports show user's performance, streak history, and comparative ranking.",
+      "feature_id": "feat_006",
+      "description": "Weekly and monthly progress reports show user's performance, including sessions completed, pronunciation accuracy improvement, words/phrases learned, streak history, and comparative ranking.",
       "lifecycle_stage": [
         "churned",
         "paid",
         "trial"
       ],
-      "primary_goal": "Drive habit formation — at least 4 sessions/week.",
+      "primary_goal": "Drive habit formation — at least 4 sessions/week",
       "sub_goals": [
-        "Show user their progress",
-        "Encourage users to continue practicing"
+        "Improve user engagement",
+        "Enhance user retention"
       ],
-      "north_star_contribution": "W1 Retention — The percentage of trial users who complete an exercise in Week 1 post-conversion",
+      "north_star_contribution": "W1 Retention — Percentage of trial users who complete an exercise in Week 1 post-conversion",
       "propensity_levers": [
-        "Personalized win-back content",
-        "Nostalgia framing"
+        "Personalized content",
+        "Progress tracking"
       ],
       "expected_outcome": "Increase W1 Retention by 10%"
     }

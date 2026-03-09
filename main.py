@@ -106,7 +106,9 @@ def run_step(name: str, profile, out0: str):
         from goal_builder import gen_segment_goals
         ns       = state.get("north_star") or _load_json(out0, "company_north_star.json")
         user_seg = _df_or_load("user_segments", out0, "user_segments.csv")
-        state["goals"] = gen_segment_goals(user_seg, profile.df, ns, out0)
+        fgm      = state.get("features")   or _load_json(out0, "feature_goal_map.json")
+        tm       = state.get("tone_matrix") or _load_json(out0, "allowed_tone_hook_matrix.json")
+        state["goals"] = gen_segment_goals(user_seg, profile.df, ns, out0, fgm, tm)
 
     # ── Task 2 ──────────────────────────────────────────────
 

@@ -61,7 +61,7 @@
       "secondary_drives": [
         "Social Influence"
       ],
-      "hook_intensity": "low",
+      "hook_intensity": "medium",
       "tone_rationale": "Friendly tones re-engage users, while informative tones provide context for the win-back process."
     },
     {
@@ -80,7 +80,7 @@
       "secondary_drives": [
         "Social Influence"
       ],
-      "hook_intensity": "low",
+      "hook_intensity": "medium",
       "tone_rationale": "Friendly tones reactivate users, while informative tones provide context for the re-engagement process."
     }
   ],
@@ -103,7 +103,7 @@
     },
     {
       "core_drive": "Empowerment",
-      "application": "Choose your learning path today and take control of your career.",
+      "application": "Choose your learning path today and take control of your career development.",
       "example_phrases": [
         "Choose your path",
         "Take control"
@@ -113,24 +113,24 @@
       "core_drive": "Ownership",
       "application": "Your 50 coins are waiting to be spent on premium content and features.",
       "example_phrases": [
-        "Your coins",
-        "Spent on premium content"
+        "Spent your coins",
+        "Unlock premium content"
       ]
     },
     {
       "core_drive": "Social Influence",
       "application": "3 friends joined this week. Invite more and become part of a supportive community.",
       "example_phrases": [
-        "Invite more",
-        "Supportive community"
+        "Invite friends",
+        "Join the community"
       ]
     },
     {
       "core_drive": "Scarcity",
       "application": "Only 2 days left in your trial! Don't miss out on this opportunity to transform your career.",
       "example_phrases": [
-        "Limited time",
-        "Transform your career"
+        "Last chance",
+        "Don't miss out"
       ]
     },
     {
@@ -138,14 +138,14 @@
       "application": "Surprise reward inside today's lesson! Stay tuned for more exciting content.",
       "example_phrases": [
         "Surprise reward",
-        "More exciting content"
+        "Stay tuned"
       ]
     },
     {
       "core_drive": "Loss Avoidance",
-      "application": "Your 7-day streak is at risk! Reactivate your account and continue growing.",
+      "application": "Your 7-day streak is at risk! Reactivate your account and continue learning.",
       "example_phrases": [
-        "Streak at risk",
+        "Streak in danger",
         "Reactivate now"
       ]
     }

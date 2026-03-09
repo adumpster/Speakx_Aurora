@@ -3,42 +3,37 @@
   "inferred_north_star": {
     "metric_name": "Monthly Retention",
     "how_it_was_determined": "explicit_extraction",
-    "definition": "The percentage of trial users who convert to a monthly paid plan and complete an exercise within the month.",
-    "justification": "This metric captures the effectiveness of our onboarding process and user engagement strategy, which are critical for driving revenue growth.",
+    "definition": "Percentage of trial users who convert to a monthly plan and complete at least one exercise within the month.",
+    "justification": "This metric captures the effectiveness of our onboarding process and user engagement strategy, which are critical for driving long-term retention and revenue growth.",
     "measurable_proxy": "(trial→monthly converters * 100) / (total trial users)"
   },
   "supporting_metrics": [
     {
-      "name": "Trial→Monthly Conversion",
-      "definition": "The percentage of trial users who convert to a monthly paid plan.",
-      "why_it_matters": "This metric indicates the success of our onboarding process and user acquisition strategy."
-    },
-    {
       "name": "W1 Retention",
-      "definition": "The percentage of monthly converters who complete an exercise within the first week post-conversion.",
-      "why_it_matters": "This metric evaluates the effectiveness of our habit formation strategy and user engagement tactics."
+      "definition": "Percentage of monthly plan converters who complete an exercise in Week 1 post-conversion.",
+      "why_it_matters": "This metric provides insight into the effectiveness of our habit formation strategy and user engagement tactics."
     }
   ],
   "lifecycle_stages": [
     {
       "stage": "trial",
       "day_range": "D0-D7",
-      "primary_goal": "Convert users to a monthly paid plan"
+      "primary_goal": "Get user to complete at least 1 exercise, feel the product value, and convert to a paid monthly plan."
     },
     {
       "stage": "paid",
       "day_range": "D8-D30",
-      "primary_goal": "Drive habit formation and user engagement"
+      "primary_goal": "Drive habit formation — at least 4 sessions/week."
     },
     {
       "stage": "churned",
       "day_range": "D31+",
-      "primary_goal": "Re-engage inactive users with personalized content"
+      "primary_goal": "Re-engage with personalized win-back content."
     },
     {
       "stage": "inactive",
       "day_range": "D31+",
-      "primary_goal": "Win back inactive users with limited-time offers"
+      "primary_goal": "Reframe setbacks as opportunities and celebrate small wins."
     }
   ],
   "generated_at": "2026-03-07",
