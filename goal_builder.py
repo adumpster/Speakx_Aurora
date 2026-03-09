@@ -2,97 +2,482 @@
 # ─────────────────────────────────────────────────────────────
 # Generates: segment_goals.csv
 #
-# For each segment × lifecycle_stage combination found in the data:
-#   - Define primary goal, sub-goals
-#   - Map to day-on-day progression (D0→D1→D2...)
-#   - One LLM call per combination
+# Phase-aware goal builder with 11 granular lifecycle phases:
+#
+# TRIAL (D1–D7):
+#   Phase 1 — Activation & Value Discovery        (Days 1–2)
+#   Phase 2 — Habit Formation & Early Engagement  (Days 3–5)
+#   Phase 3 — The Conversion Push                 (Days 6–7)
+#
+# PAID (D8–D30):
+#   Phase 4 — Premium Affirmation                 (Days 8–10)
+#   Phase 5 — Deep Immersion                      (Days 11–15)
+#   Phase 6 — Social & Expansion Drive            (Days 16–20)
+#   Phase 7 — Overcoming the Slump                (Days 21–25)
+#   Phase 8 — ROI Demonstration                   (Days 26–28)
+#   Phase 9 — Retention & Renewal                 (Days 29–30)
+#
+# CHURNED (D31+):
+#   Phase 10 — The Win-Back
+#
+# INACTIVE (D X+):
+#   Phase 11 — The Low-Friction Re-engagement
+#
+# Architecture: domain-agnostic — swap KB + CSV, same orchestrator.
 # ─────────────────────────────────────────────────────────────
 
+import json
+import os
+import re
 import pandas as pd
-from llm import llm, safe_parse_json, save_csv
-from data_loader import load_data, add_derived_signals
-from kb_loader   import load_kb
-from config import LIFECYCLE_STAGES
+
+# ── Config ────────────────────────────────────────────────────
+
+PHASE_CONFIG = {
+    # ── TRIAL ──────────────────────────────────────────────────
+    "trial_phase1_activation": {
+        "lifecycle": "trial",
+        "phase_number": 1,
+        "phase_name": "Activation & Value Discovery",
+        "day_range": "Days 1–2",
+        "primary_goal": "Deliver the 'aha moment' — make the user feel immediate value within the first 48 hours.",
+        "strategic_intent": (
+            "First impressions are permanent. The user signed up with hope; "
+            "our job is to convert that hope into a felt experience of progress. "
+            "Reduce friction to zero, surface the most impressive feature instantly, "
+            "and anchor identity: 'I am someone who does this.'"
+        ),
+        "octolysis_drives": ["Epic Meaning", "Accomplishment", "Unpredictability"],
+        "key_nudges": [
+            "Welcome + instant first win (complete 1 micro-exercise)",
+            "Onboarding streak seed — frame Day 1 completion as 'Day 1 of your streak'",
+            "Tease upcoming features to create curiosity gap",
+        ],
+    },
+    "trial_phase2_habit": {
+        "lifecycle": "trial",
+        "phase_number": 2,
+        "phase_name": "Habit Formation & Early Engagement",
+        "day_range": "Days 3–5",
+        "primary_goal": "Establish a daily usage pattern — 3 consecutive active days locks in behavioral habit.",
+        "strategic_intent": (
+            "Habit loops need repetition in the same context. "
+            "Tie the app to an existing ritual (morning coffee, commute). "
+            "Use streak mechanics, progress visibility, and social proof "
+            "to make skipping feel costlier than engaging."
+        ),
+        "octolysis_drives": ["Accomplishment", "Loss Avoidance", "Social Influence"],
+        "key_nudges": [
+            "Streak danger alert if user hasn't opened by preferred_hour",
+            "Progress report: 'You've improved X% since Day 1'",
+            "Social proof: 'Users like you completed Y exercises this week'",
+        ],
+    },
+    "trial_phase3_conversion": {
+        "lifecycle": "trial",
+        "phase_number": 3,
+        "phase_name": "The Conversion Push",
+        "day_range": "Days 6–7",
+        "primary_goal": "Convert trial user to paid subscriber before trial expiry.",
+        "strategic_intent": (
+            "Scarcity is real — trial ends in hours. "
+            "Lead with value already received, then anchor on what they'll lose. "
+            "Remove friction: one-tap upgrade, payment pre-filled. "
+            "Urgency must feel earned, not manufactured."
+        ),
+        "octolysis_drives": ["Scarcity", "Loss Avoidance", "Ownership"],
+        "key_nudges": [
+            "Countdown: 'Your trial ends in X hours — keep your streak alive'",
+            "Value recap: 'You've completed N sessions. Don't let this progress expire.'",
+            "Coin balance reminder: 'Your X coins unlock premium lessons — upgrade to use them'",
+        ],
+    },
+    # ── PAID ───────────────────────────────────────────────────
+    "paid_phase4_affirmation": {
+        "lifecycle": "paid",
+        "phase_number": 4,
+        "phase_name": "Premium Affirmation",
+        "day_range": "Days 8–10",
+        "primary_goal": "Validate the purchase decision — eliminate buyer's remorse, unlock premium features immediately.",
+        "strategic_intent": (
+            "The first 72 hours post-conversion is the highest-churn-risk window. "
+            "The user needs to feel the paid experience is visibly better. "
+            "Surface exclusive content, celebrate the upgrade, "
+            "and reinforce identity: 'You are now a serious learner.'"
+        ),
+        "octolysis_drives": ["Epic Meaning", "Ownership", "Accomplishment"],
+        "key_nudges": [
+            "Welcome to premium: unlock exclusive AI tutor session",
+            "Badge/achievement for converting: 'Committed Learner' status",
+            "Personalized learning path reveal based on their trial behavior",
+        ],
+    },
+    "paid_phase5_immersion": {
+        "lifecycle": "paid",
+        "phase_number": 5,
+        "phase_name": "Deep Immersion",
+        "day_range": "Days 11–15",
+        "primary_goal": "Drive deep feature adoption — AI tutor, progress reports, and role-based scenarios.",
+        "strategic_intent": (
+            "Surface area of the product = stickiness. "
+            "Users who use 3+ features churn 60% less. "
+            "Guide users through features they haven't discovered, "
+            "using personalized recommendations based on their propensity profile."
+        ),
+        "octolysis_drives": ["Empowerment", "Unpredictability", "Accomplishment"],
+        "key_nudges": [
+            "Feature discovery: 'You haven't tried [unused_feature] yet — here's why it helps you'",
+            "AI tutor conversation starter tailored to user's goal (job interview, confidence, etc.)",
+            "Mid-point progress milestone: '15 days in, your fluency score is rising'",
+        ],
+    },
+    "paid_phase6_social": {
+        "lifecycle": "paid",
+        "phase_number": 6,
+        "phase_name": "Social & Expansion Drive",
+        "day_range": "Days 16–20",
+        "primary_goal": "Leverage social mechanics and referrals to deepen engagement and expand user network.",
+        "strategic_intent": (
+            "Users with friends in the product have 3x retention. "
+            "Activate leaderboard competition, referral programs, and community features. "
+            "Turn the individual journey into a shared one — "
+            "social accountability is the strongest long-term retention lever."
+        ),
+        "octolysis_drives": ["Social Influence", "Epic Meaning", "Ownership"],
+        "key_nudges": [
+            "Leaderboard rank reveal: 'You're in the top X% this week'",
+            "Referral hook: 'Invite a friend — you both get bonus coins'",
+            "Group challenge: 'Join this week's community speaking challenge'",
+        ],
+    },
+    "paid_phase7_slump": {
+        "lifecycle": "paid",
+        "phase_number": 7,
+        "phase_name": "Overcoming the Slump",
+        "day_range": "Days 21–25",
+        "primary_goal": "Detect and counter mid-subscription disengagement before it becomes churn.",
+        "strategic_intent": (
+            "The 3-week mark is where motivation naturally dips — "
+            "novelty has worn off, results aren't yet dramatic. "
+            "Proactively surface wins they've had, re-anchor their 'why', "
+            "and reduce session friction to the absolute minimum."
+        ),
+        "octolysis_drives": ["Loss Avoidance", "Accomplishment", "Empowerment"],
+        "key_nudges": [
+            "Streak save intervention if sessions drop below baseline",
+            "Re-anchor to goal: 'Remember why you started — [user_goal]'",
+            "Reduced-effort session: '5-minute speaking drill — just 5 minutes today'",
+        ],
+    },
+    "paid_phase8_roi": {
+        "lifecycle": "paid",
+        "phase_number": 8,
+        "phase_name": "ROI Demonstration",
+        "day_range": "Days 26–28",
+        "primary_goal": "Show measurable, concrete improvement to justify renewal.",
+        "strategic_intent": (
+            "Renewal decisions are rational at this stage. "
+            "Lead with data: fluency score delta, sessions completed, streak length, "
+            "peer ranking improvement. Make the ROI undeniable. "
+            "Frame continuation as investment, not expense."
+        ),
+        "octolysis_drives": ["Accomplishment", "Epic Meaning", "Ownership"],
+        "key_nudges": [
+            "Monthly progress report: before vs. after fluency comparison",
+            "Achievement summary: 'You completed N exercises, built a X-day streak'",
+            "Peer benchmark: 'You're now better than X% of learners who started with you'",
+        ],
+    },
+    "paid_phase9_renewal": {
+        "lifecycle": "paid",
+        "phase_number": 9,
+        "phase_name": "Retention & Renewal",
+        "day_range": "Days 29–30",
+        "primary_goal": "Secure renewal before subscription lapses with minimal friction.",
+        "strategic_intent": (
+            "Auto-renewal should feel like a celebration, not a chore. "
+            "For users considering lapsing: loss framing on streak, coins, rank. "
+            "For committed users: reward loyalty with a bonus or early access. "
+            "Personalize based on churn_risk_score — high risk gets more aggressive re-engagement."
+        ),
+        "octolysis_drives": ["Scarcity", "Loss Avoidance", "Unpredictability"],
+        "key_nudges": [
+            "Renewal reminder with loyalty reward: 'Renew today, get 2 weeks free'",
+            "Loss framing for high-risk: 'Your X-day streak disappears if you don't renew'",
+            "Surprise bonus for auto-renewing: unlock a new scenario pack",
+        ],
+    },
+    # ── CHURNED ────────────────────────────────────────────────
+    "churned_phase10_winback": {
+        "lifecycle": "churned",
+        "phase_number": 10,
+        "phase_name": "The Win-Back",
+        "day_range": "Day 31+",
+        "primary_goal": "Re-activate churned users through nostalgia, urgency, and irresistible re-entry offers.",
+        "strategic_intent": (
+            "Churned users left for a reason — find it. "
+            "Lead with nostalgia and what they've missed. "
+            "Use limited-time win-back offers (discount, free week). "
+            "Lower re-entry bar dramatically: one-tap resume, "
+            "saved progress, no re-onboarding friction."
+        ),
+        "octolysis_drives": ["Loss Avoidance", "Epic Meaning", "Scarcity"],
+        "key_nudges": [
+            "Nostalgia hook: 'You were so close — your progress is still saved'",
+            "Win-back offer: 'Come back this week — 40% off, 24 hours only'",
+            "Social proof: 'Your peers have improved X% since you left'",
+        ],
+    },
+    # ── INACTIVE ───────────────────────────────────────────────
+    "inactive_phase11_reengagement": {
+        "lifecycle": "inactive",
+        "phase_number": 11,
+        "phase_name": "The Low-Friction Re-engagement",
+        "day_range": "Day X+",
+        "primary_goal": "Trigger one micro-action with zero friction to re-establish presence in user's routine.",
+        "strategic_intent": (
+            "Inactive users have high cognitive barriers to return — "
+            "don't ask for a full session, ask for one tap. "
+            "Micro-commitments rebuild habits. "
+            "Lead with a compelling hook (new feature, community event, personal milestone), "
+            "not a generic 'we miss you'. Be specific, be brief, be curious-gap-driven."
+        ),
+        "octolysis_drives": ["Unpredictability", "Social Influence", "Empowerment"],
+        "key_nudges": [
+            "Curiosity gap: 'A new speaking challenge just dropped — 2 minutes to try'",
+            "Personalized milestone: 'You were X exercises away from [achievement]'",
+            "Community event: 'Your group is doing a challenge this week — join in'",
+        ],
+    },
+}
+
+# Map lifecycle → applicable phases
+LIFECYCLE_PHASE_MAP = {
+    "trial":    ["trial_phase1_activation", "trial_phase2_habit", "trial_phase3_conversion"],
+    "paid":     ["paid_phase4_affirmation", "paid_phase5_immersion", "paid_phase6_social",
+                 "paid_phase7_slump", "paid_phase8_roi", "paid_phase9_renewal"],
+    "churned":  ["churned_phase10_winback"],
+    "inactive": ["inactive_phase11_reengagement"],
+}
 
 
-def _gen_goal_entry(
-    segment_id:      str,
-    segment_name:    str,
-    lifecycle_stage: str,
-    stage_info:      dict,
-    segment_stats:   dict,
-    north_star:      dict,
+# ── Helpers ───────────────────────────────────────────────────
+
+def safe_parse_json(raw: str, fallback: dict) -> dict:
+    """Robustly parse JSON from LLM output, stripping markdown fences."""
+    try:
+        clean = re.sub(r"```(?:json)?|```", "", raw).strip()
+        return json.loads(clean)
+    except Exception:
+        # Try extracting first {...} block
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group())
+            except Exception:
+                pass
+    return fallback
+
+
+def save_csv(df: pd.DataFrame, filename: str, output_dir: str = None) -> None:
+    path = os.path.join(output_dir or ".", filename)
+    df.to_csv(path, index=False)
+    print(f"  ✓ Saved → {path}")
+
+
+def _call_llm(system: str, prompt: str) -> str:
+    """
+    LLM call — tries local `llm` module first, falls back to Anthropic SDK.
+    This keeps the module runnable both inside the project repo and standalone.
+    """
+    try:
+        from llm import llm  # project-local wrapper
+        return llm(system=system, prompt=prompt)
+    except ImportError:
+        pass
+
+    try:
+        import anthropic
+        client = anthropic.Anthropic()
+        msg = client.messages.create(
+            model="claude-opus-4-5",
+            max_tokens=1500,
+            system=system,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return msg.content[0].text
+    except Exception as e:
+        print(f"  [LLM ERROR] {e}")
+        return "{}"
+
+
+def _load_kb() -> str:
+    """Load Knowledge Bank if available."""
+    for candidate in ["knowledge_bank.md", "kb.md", "company_kb.md"]:
+        if os.path.exists(candidate):
+            with open(candidate) as f:
+                return f.read()
+    return "(Knowledge Bank not found — using behavioral data and config only)"
+
+
+# ── Core goal generator ───────────────────────────────────────
+
+def _build_phase_goal(
+    segment_id: str,
+    segment_name: str,
+    dominant_propensity: str,
+    phase_key: str,
+    phase_cfg: dict,
+    stats: dict,
+    north_star: dict,
+    kb_text: str,
 ) -> dict:
-    """One LLM call → one row for segment_goals.csv."""
-
-    ns_metric = north_star.get("inferred_north_star", {}).get("metric_name", "W1 Retention")
+    """
+    One LLM call → one row for segment_goals.csv.
+    Fully prompt-engineered for specificity and domain-agnosticism.
+    """
+    ns_metric = north_star.get("inferred_north_star", {}).get("metric_name", "Monthly Retention")
     ns_def    = north_star.get("inferred_north_star", {}).get("definition", "")
 
-    raw = llm(
-        system="You are a product journey designer. Output ONLY valid JSON.",
-        prompt=f"""
+    octolysis_str = ", ".join(phase_cfg["octolysis_drives"])
+    nudges_str    = "\n".join(f"  • {n}" for n in phase_cfg["key_nudges"])
+
+    prompt = f"""
 KNOWLEDGE BANK:
-{load_kb()}
+{kb_text}
 
-Segment : {segment_name} (id: {segment_id})
-Lifecycle stage : {lifecycle_stage} ({stage_info['day_range']})
-Stage primary goal : {stage_info['primary_goal']}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SEGMENT CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Segment ID          : {segment_id}
+Segment Name        : {segment_name}
+Dominant Propensity : {dominant_propensity}
 
-Segment stats (from behavioral data):
-  avg_activeness_score : {segment_stats.get('avg_activeness', 0.5)}
-  avg_churn_risk       : {segment_stats.get('avg_churn_risk', 0.3)}
-  avg_motivation       : {segment_stats.get('avg_motivation', 0.5)}
-  avg_exercises_7d     : {segment_stats.get('avg_exercises', 5)}
+BEHAVIORAL STATS (from CSV):
+  avg_activeness_score  : {stats.get('avg_activeness', 0.5):.3f}
+  avg_churn_risk_score  : {stats.get('avg_churn_risk', 0.3):.3f}
+  avg_motivation_score  : {stats.get('avg_motivation', 0.5):.3f}
+  avg_exercises_7d      : {stats.get('avg_exercises', 5):.1f}
+  avg_sessions_7d       : {stats.get('avg_sessions', 3):.1f}
+  avg_notif_open_rate   : {stats.get('avg_notif_open', 0.4):.3f}
+  avg_streak_current    : {stats.get('avg_streak', 2):.1f}
+  avg_coins_balance     : {stats.get('avg_coins', 50):.0f}
 
-North Star Metric: {ns_metric} — {ns_def}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Phase Number        : {phase_cfg['phase_number']} of 11
+Phase Name          : {phase_cfg['phase_name']}
+Lifecycle Stage     : {phase_cfg['lifecycle'].upper()}
+Day Range           : {phase_cfg['day_range']}
+Phase Primary Goal  : {phase_cfg['primary_goal']}
+Strategic Intent    : {phase_cfg['strategic_intent']}
+Octolysis Drives    : {octolysis_str}
+Suggested Nudges    :
+{nudges_str}
 
-Use the Knowledge Bank above for company context, product features, and user journey stages.
-Design the goal progression for this segment × lifecycle stage.
-Return ONLY valid JSON:
+North Star Metric   : {ns_metric} — {ns_def}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+YOUR TASK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Design a precise, data-driven goal plan for this SEGMENT × PHASE combination.
+Be specific to the segment's propensity ({dominant_propensity}) and activeness level.
+Consider their churn risk ({stats.get('avg_churn_risk', 0.3):.2f}) when calibrating urgency.
+
+Return ONLY valid JSON (no markdown, no explanation):
 {{
-  "primary_goal":     "<the single most important goal to drive for this combination>",
-  "sub_goals":        ["<sub goal 1>", "<sub goal 2>", "<sub goal 3>"],
+  "primary_goal": "<single most important goal for this segment in this phase>",
+  "sub_goals": [
+    "<sub_goal_1 — specific, measurable>",
+    "<sub_goal_2 — specific, measurable>",
+    "<sub_goal_3 — specific, measurable>"
+  ],
   "day_focus": {{
-    "D0": "<what to nudge user to do on first notification day>",
-    "D1": "<Day 1 focus>",
-    "D2": "<Day 2 focus>",
-    "D3-D5": "<Mid-period focus>",
-    "D6-D7": "<End-of-period focus>"
+    "day_1": "<exact first-day nudge for this phase>",
+    "day_2": "<second day focus>",
+    "day_mid": "<mid-phase focus (if phase > 2 days)>",
+    "day_end": "<final day of phase focus — transition to next phase>"
   }},
-  "success_metric":   "<what measurable outcome signals this goal was achieved>",
-  "failure_signal":   "<what behavioural signal means this goal is failing>",
-  "escalation_action":"<what to do if failure signal is detected>"
+  "primary_octolysis_drive": "<single most relevant Octolysis drive for this segment×phase>",
+  "hook_template": "<a concrete notification hook line using the Octolysis drive>",
+  "success_metric": "<measurable outcome that signals goal achieved>",
+  "failure_signal": "<behavioral signal that means goal is failing>",
+  "escalation_action": "<what to do when failure signal detected>",
+  "personalization_lever": "<what behavioral data field to personalize on most for this segment>"
 }}"""
+
+    raw = _call_llm(
+        system=(
+            "You are an expert product journey designer specialising in behavioral psychology "
+            "and notification orchestration. You think in Octolysis drives, churn signals, and "
+            "user psychology. Output ONLY valid JSON — no preamble, no markdown fences."
+        ),
+        prompt=prompt,
     )
 
-    result = safe_parse_json(raw, fallback={
-        "primary_goal":      stage_info["primary_goal"],
-        "sub_goals":         ["Increase session frequency", "Complete at least 1 exercise/day", "Maintain streak"],
-        "day_focus":         {"D0": "First practice session", "D1-D7": "Build daily habit"},
-        "success_metric":    "exercises_completed_7d >= 3",
-        "failure_signal":    "sessions_last_7d == 0 for 3 consecutive days",
-        "escalation_action": "Send Loss Avoidance notification with streak-save hook",
-    })
-
-    return {
-        "segment_id":        segment_id,
-        "segment_name":      segment_name,
-        "lifecycle_stage":   lifecycle_stage,
-        "day_range":         stage_info["day_range"],
-        "primary_goal":      result.get("primary_goal", stage_info["primary_goal"]),
-        "sub_goal_1":        result.get("sub_goals", [""])[0] if result.get("sub_goals") else "",
-        "sub_goal_2":        result.get("sub_goals", ["",""])[1] if len(result.get("sub_goals",[])) > 1 else "",
-        "sub_goal_3":        result.get("sub_goals", ["","",""])[2] if len(result.get("sub_goals",[])) > 2 else "",
-        "day_focus_D0":      result.get("day_focus", {}).get("D0", ""),
-        "day_focus_D1":      result.get("day_focus", {}).get("D1", ""),
-        "day_focus_D2":      result.get("day_focus", {}).get("D2", ""),
-        "day_focus_D3_D5":   result.get("day_focus", {}).get("D3-D5", ""),
-        "day_focus_D6_D7":   result.get("day_focus", {}).get("D6-D7", ""),
-        "success_metric":    result.get("success_metric", ""),
-        "failure_signal":    result.get("failure_signal", ""),
-        "escalation_action": result.get("escalation_action", ""),
+    fallback = {
+        "primary_goal":          phase_cfg["primary_goal"],
+        "sub_goals":             [
+            f"Increase {dominant_propensity} engagement",
+            "Complete at least 1 core action per day",
+            "Maintain streak continuity",
+        ],
+        "day_focus": {
+            "day_1":   f"Trigger first action — leverage {dominant_propensity} propensity",
+            "day_2":   "Reinforce yesterday's win, add incremental challenge",
+            "day_mid": "Sustain momentum, introduce social element",
+            "day_end": f"Prepare transition — preview next phase value",
+        },
+        "primary_octolysis_drive":  phase_cfg["octolysis_drives"][0],
+        "hook_template":            phase_cfg["key_nudges"][0],
+        "success_metric":           "exercises_completed_7d >= 3 AND sessions_last_7d >= 3",
+        "failure_signal":           "sessions_last_7d == 0 for 2 consecutive days",
+        "escalation_action":        "Send Loss Avoidance notification with streak-save hook",
+        "personalization_lever":    dominant_propensity,
     }
 
+    result = safe_parse_json(raw, fallback)
+
+    sub_goals = result.get("sub_goals", fallback["sub_goals"])
+    day_focus  = result.get("day_focus", fallback["day_focus"])
+
+    return {
+        # Identity
+        "segment_id":               segment_id,
+        "segment_name":             segment_name,
+        "dominant_propensity":      dominant_propensity,
+        "lifecycle_stage":          phase_cfg["lifecycle"],
+        # Phase metadata
+        "phase_number":             phase_cfg["phase_number"],
+        "phase_name":               phase_cfg["phase_name"],
+        "day_range":                phase_cfg["day_range"],
+        # Goals
+        "primary_goal":             result.get("primary_goal",  phase_cfg["primary_goal"]),
+        "sub_goal_1":               sub_goals[0] if len(sub_goals) > 0 else "",
+        "sub_goal_2":               sub_goals[1] if len(sub_goals) > 1 else "",
+        "sub_goal_3":               sub_goals[2] if len(sub_goals) > 2 else "",
+        # Day-level focus
+        "day_focus_day1":           day_focus.get("day_1",   ""),
+        "day_focus_day2":           day_focus.get("day_2",   ""),
+        "day_focus_mid":            day_focus.get("day_mid", ""),
+        "day_focus_end":            day_focus.get("day_end", ""),
+        # Psychology
+        "primary_octolysis_drive":  result.get("primary_octolysis_drive",  phase_cfg["octolysis_drives"][0]),
+        "hook_template":            result.get("hook_template",             phase_cfg["key_nudges"][0]),
+        # Signals
+        "success_metric":           result.get("success_metric",           fallback["success_metric"]),
+        "failure_signal":           result.get("failure_signal",           fallback["failure_signal"]),
+        "escalation_action":        result.get("escalation_action",        fallback["escalation_action"]),
+        "personalization_lever":    result.get("personalization_lever",    dominant_propensity),
+        # Segment stats (for downstream consumers)
+        "stat_avg_activeness":      round(stats.get("avg_activeness", 0.5), 3),
+        "stat_avg_churn_risk":      round(stats.get("avg_churn_risk",  0.3), 3),
+        "stat_avg_motivation":      round(stats.get("avg_motivation",  0.5), 3),
+    }
+
+
+# ── Public API ────────────────────────────────────────────────
 
 def gen_segment_goals(
     user_segments_df: pd.DataFrame = None,
@@ -101,72 +486,190 @@ def gen_segment_goals(
     output_dir: str = None,
 ) -> pd.DataFrame:
     """
-    Build segment_goals.csv.
+    Build segment_goals.csv with 11 granular lifecycle phases.
 
     Args:
-        user_segments_df : output of gen_user_segments (optional)
-        df               : raw behavioral DataFrame (optional)
-        north_star       : output of gen_north_star (optional)
-        output_dir       : override output directory (optional)
+        user_segments_df : output of gen_user_segments (segment_id, segment_name,
+                           user_id, lifecycle_stage, dominant_propensity, activeness_score,
+                           churn_risk_score columns expected)
+        df               : raw behavioral DataFrame with motivation_score,
+                           exercises_completed_7d, sessions_last_7d, etc.
+        north_star       : output of gen_north_star
+        output_dir       : override output directory (default: current dir)
     """
-    print("\n[5/5] Generating: segment_goals.csv")
+    print("\n[Goal Builder] Generating segment_goals.csv — 11-phase architecture")
 
-    # Load raw data if needed for stats
+    # ── Load raw behavioral data ───────────────────────────────
     if df is None:
-        df = load_data()
-        df = add_derived_signals(df)
+        try:
+            from data_loader import load_data, add_derived_signals
+            df = add_derived_signals(load_data())
+        except ImportError:
+            print("  [WARN] data_loader not found — stats will use defaults")
+            df = pd.DataFrame()
 
+    # ── North star ─────────────────────────────────────────────
     if north_star is None:
-        north_star = {
-            "inferred_north_star": {
-                "metric_name": "W1 Retention",
-                "definition":  "Users completing at least one exercise in week 1 post-conversion.",
+        ns_path = "company_north_star.json"
+        if os.path.exists(ns_path):
+            with open(ns_path) as f:
+                north_star = json.load(f)
+        else:
+            north_star = {
+                "inferred_north_star": {
+                    "metric_name": "Monthly Retention",
+                    "definition":  "Users who complete an exercise within the month out of all users who converted from trial.",
+                }
             }
-        }
 
-    # Determine segment × stage combinations
-    if user_segments_df is not None and "segment_id" in user_segments_df.columns:
-        combos = (
-            user_segments_df[["segment_id", "segment_name", "lifecycle_stage"]]
-            .drop_duplicates()
-            .sort_values(["segment_id", "lifecycle_stage"])
+    # ── Load segments ──────────────────────────────────────────
+    if user_segments_df is None:
+        seg_path = "user_segments.csv"
+        if os.path.exists(seg_path):
+            user_segments_df = pd.read_csv(seg_path)
+            print(f"  Loaded {len(user_segments_df)} rows from {seg_path}")
+        else:
+            try:
+                from segmentation_engine import gen_user_segments
+                user_segments_df, _ = gen_user_segments(df, output_dir)
+            except ImportError:
+                raise FileNotFoundError(
+                    "user_segments.csv not found and segmentation_engine unavailable."
+                )
+
+    # ── Deduplicate to segment × lifecycle combos ──────────────
+    # One row per (segment_id × lifecycle_stage), picking the SINGLE most
+    # frequent dominant_propensity (mode) so we don't fan out per-propensity.
+    prop_col = "dominant_propensity" if "dominant_propensity" in user_segments_df.columns else None
+
+    base_cols = ["segment_id", "segment_name", "lifecycle_stage"]
+    combos_base = (
+        user_segments_df[base_cols]
+        .drop_duplicates()
+        .sort_values(["lifecycle_stage", "segment_id"])
+        .reset_index(drop=True)
+    )
+
+    if prop_col:
+        # For each segment × lifecycle, pick the propensity with the highest
+        # user count (mode). Ties broken by first alphabetically.
+        dominant = (
+            user_segments_df
+            .groupby(["segment_id", "lifecycle_stage"])[prop_col]
+            .agg(lambda x: x.value_counts().idxmax())
+            .reset_index()
+            .rename(columns={prop_col: "dominant_propensity"})
         )
+        combos = combos_base.merge(dominant, on=["segment_id", "lifecycle_stage"], how="left")
     else:
-        # Fallback: re-run segmentation inline
-        from segmentation_engine import gen_user_segments
-        user_segments_df, _ = gen_user_segments(df, output_dir)
-        combos = (
-            user_segments_df[["segment_id", "segment_name", "lifecycle_stage"]]
-            .drop_duplicates()
-            .sort_values(["segment_id", "lifecycle_stage"])
-        )
+        combos = combos_base.copy()
+        combos["dominant_propensity"] = "unknown"
 
-    rows = []
-    total = len(combos)
-    for i, (_, combo) in enumerate(combos.iterrows()):
-        sid   = combo["segment_id"]
-        sname = combo["segment_name"]
-        stage = combo["lifecycle_stage"]
+    kb_text = _load_kb()
+    rows    = []
+    total_combos  = len(combos)
+    total_phases  = sum(len(LIFECYCLE_PHASE_MAP.get(row["lifecycle_stage"], [])) for _, row in combos.iterrows())
 
-        stage_info = LIFECYCLE_STAGES.get(stage, {
-            "day_range": "D0+", "primary_goal": "Engage user"
-        })
+    print(f"  {total_combos} segment × lifecycle combinations → {total_phases} segment × phase rows\n")
 
-        # Compute stats for this segment from the behavioral data
-        seg_df = df[df["lifecycle_stage"] == stage] if user_segments_df is None else \
-                 df[df["user_id"].isin(user_segments_df[user_segments_df["segment_id"] == sid]["user_id"])]
+    call_num = 0
+    for _, combo in combos.iterrows():
+        sid       = combo["segment_id"]
+        sname     = combo["segment_name"]
+        lifecycle = combo["lifecycle_stage"]
+        propensity = combo.get("dominant_propensity", "unknown")
+
+        phases = LIFECYCLE_PHASE_MAP.get(lifecycle, [])
+        if not phases:
+            print(f"  [SKIP] No phases defined for lifecycle '{lifecycle}'")
+            continue
+
+        # ── Compute segment stats from behavioral data ─────────
+        if not df.empty and "user_id" in df.columns and "user_id" in user_segments_df.columns:
+            seg_user_ids = user_segments_df[user_segments_df["segment_id"] == sid]["user_id"]
+            seg_df = df[df["user_id"].isin(seg_user_ids)]
+        elif not df.empty and "lifecycle_stage" in df.columns:
+            seg_df = df[df["lifecycle_stage"] == lifecycle]
+        else:
+            seg_df = pd.DataFrame()
+
+        def _mean(col, default):
+            return round(seg_df[col].mean(), 3) if col in seg_df.columns and not seg_df.empty else default
 
         stats = {
-            "avg_activeness": round(seg_df["activeness_score"].mean(), 3) if "activeness_score" in seg_df.columns else 0.5,
-            "avg_churn_risk": round(seg_df["churn_risk_score"].mean(), 3) if "churn_risk_score" in seg_df.columns else 0.3,
-            "avg_motivation": round(seg_df["motivation_score"].mean(), 3),
-            "avg_exercises":  round(seg_df["exercises_completed_7d"].mean(), 1),
+            "avg_activeness":   _mean("activeness_score",      0.5),
+            "avg_churn_risk":   _mean("churn_risk_score",      0.3),
+            "avg_motivation":   _mean("motivation_score",      0.5),
+            "avg_exercises":    _mean("exercises_completed_7d", 5),
+            "avg_sessions":     _mean("sessions_last_7d",      3),
+            "avg_notif_open":   _mean("notif_open_rate_30d",   0.4),
+            "avg_streak":       _mean("streak_current",        2),
+            "avg_coins":        _mean("coins_balance",         50),
         }
 
-        print(f"  [{i+1}/{total}] {sid} × {stage}")
-        row = _gen_goal_entry(sid, sname, stage, stage_info, stats, north_star)
-        rows.append(row)
+        for phase_key in phases:
+            call_num += 1
+            phase_cfg = PHASE_CONFIG[phase_key]
+            print(f"  [{call_num}/{total_phases}] {sid} | {phase_cfg['phase_name']} ({phase_cfg['day_range']})")
+
+            row = _build_phase_goal(
+                segment_id=sid,
+                segment_name=sname,
+                dominant_propensity=propensity,
+                phase_key=phase_key,
+                phase_cfg=phase_cfg,
+                stats=stats,
+                north_star=north_star,
+                kb_text=kb_text,
+            )
+            rows.append(row)
 
     goals_df = pd.DataFrame(rows)
+
+    # ── Column ordering ────────────────────────────────────────
+    col_order = [
+        "segment_id", "segment_name", "dominant_propensity",
+        "lifecycle_stage", "phase_number", "phase_name", "day_range",
+        "primary_goal", "sub_goal_1", "sub_goal_2", "sub_goal_3",
+        "day_focus_day1", "day_focus_day2", "day_focus_mid", "day_focus_end",
+        "primary_octolysis_drive", "hook_template",
+        "success_metric", "failure_signal", "escalation_action",
+        "personalization_lever",
+        "stat_avg_activeness", "stat_avg_churn_risk", "stat_avg_motivation",
+    ]
+    goals_df = goals_df[[c for c in col_order if c in goals_df.columns]]
+
     save_csv(goals_df, "segment_goals.csv", output_dir)
+    print(f"\n  ✓ segment_goals.csv: {len(goals_df)} rows ({total_combos} segments × up to 11 phases)")
     return goals_df
+
+
+# ── Standalone runner ─────────────────────────────────────────
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Goal Builder — 11-phase segment goal generator")
+    parser.add_argument("--segments",   default="user_segments.csv",      help="Path to user_segments.csv")
+    parser.add_argument("--behavioral", default="user_behavioral_data.csv", help="Path to behavioral CSV")
+    parser.add_argument("--north-star", default="company_north_star.json", help="Path to north star JSON")
+    parser.add_argument("--output-dir", default=".",                       help="Output directory")
+    args = parser.parse_args()
+
+    # Load inputs
+    seg_df = pd.read_csv(args.segments) if os.path.exists(args.segments) else None
+    beh_df = pd.read_csv(args.behavioral) if os.path.exists(args.behavioral) else None
+
+    ns = None
+    if os.path.exists(args.north_star):
+        with open(args.north_star) as f:
+            ns = json.load(f)
+
+    os.makedirs(args.output_dir, exist_ok=True)
+    goals = gen_segment_goals(
+        user_segments_df=seg_df,
+        df=beh_df,
+        north_star=ns,
+        output_dir=args.output_dir,
+    )
+    print(goals[["segment_id", "phase_name", "primary_goal"]].to_string(index=False))
