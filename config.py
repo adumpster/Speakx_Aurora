@@ -5,7 +5,7 @@
 
 # ── Ollama settings ───────────────────────────────────────────────────────────
 OLLAMA_URL = "http://localhost:11434"
-GEN_MODEL  = "llama3.2:3b"              # text generation model
+GEN_MODEL  = "llama3.2:latest"              # text generation model
 
 # ── File / folder paths ───────────────────────────────────────────────────────
 KB_PATH        = "speakx_kb.txt"              # company knowledge base (plain text / markdown)

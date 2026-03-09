@@ -32,7 +32,7 @@
 # ─────────────────────────────────────────────────────────────
 
 import pandas as pd
-from llm         import save_csv
+from llm import save_csv
 from data_loader import load_data, add_derived_signals
 
 
@@ -97,7 +97,7 @@ def _add_dominant_propensity(df: pd.DataFrame) -> pd.DataFrame:
     """Add dominant_propensity and dominant_propensity_score columns."""
     prop_cols = _get_propensity_cols(df)
     if not prop_cols:
-        df["dominant_propensity"]       = "none"
+        df["dominant_propensity"] = "none"
         df["dominant_propensity_score"] = 0.0
         return df
 
@@ -117,7 +117,7 @@ def _assign_segment(row: pd.Series) -> str:
     Uses dominant_propensity to further split within paid segments.
     All logic is data-driven — no feature names hardcoded.
     """
-    act   = row["activeness_score"]
+    act = row["activeness_score"]
     stage = row["lifecycle_stage"]
     dom_score = row.get("dominant_propensity_score", 0)
 
@@ -153,13 +153,14 @@ def _assign_segment(row: pd.Series) -> str:
 # ── Key behaviour signal (pure statistics) ────────────────────
 
 def _key_signal(df_seg: pd.DataFrame, prop_cols: list) -> str:
-    avg_act   = df_seg["activeness_score"].mean()
+    avg_act = df_seg["activeness_score"].mean()
     avg_churn = df_seg["churn_risk_score"].mean()
-    avg_motiv = df_seg["motivation_score"].mean() if "motivation_score" in df_seg.columns else 0
+    avg_motiv = df_seg["motivation_score"].mean(
+    ) if "motivation_score" in df_seg.columns else 0
 
     # Find dominant propensity by average across segment (dynamic)
     if prop_cols:
-        prop_avgs = {c.replace("propensity_", ""): df_seg[c].mean() for c in prop_cols}
+        prop_avgs = {c.replace("propensity_", "")                     : df_seg[c].mean() for c in prop_cols}
         dom = max(prop_avgs, key=prop_avgs.get)
         dom_val = prop_avgs[dom]
         prop_str = f"dominant propensity: {dom} ({dom_val:.2f})"
@@ -167,7 +168,7 @@ def _key_signal(df_seg: pd.DataFrame, prop_cols: list) -> str:
         prop_str = "no feature propensity data"
 
     stage_dist = df_seg["lifecycle_stage"].value_counts().to_dict()
-    top_stage  = max(stage_dist, key=stage_dist.get)
+    top_stage = max(stage_dist, key=stage_dist.get)
 
     return (
         f"{top_stage.capitalize()} users — activeness {avg_act:.2f}, "
@@ -195,15 +196,17 @@ def gen_user_segments(df=None, output_dir: str = None):
 
     # Discover propensity columns (whatever feature_* cols exist in this CSV)
     prop_cols = _get_propensity_cols(df)
-    print(f"  [seg] Propensity columns found: {[c.replace('propensity_','') for c in prop_cols]}")
+    print(
+        f"  [seg] Propensity columns found: {[c.replace('propensity_', '') for c in prop_cols]}")
 
     # Add dominant propensity per user
     df = _add_dominant_propensity(df)
 
     # Assign segment
     print("  [seg] Assigning MECE segments ...")
-    df["segment_id"]   = df.apply(_assign_segment, axis=1)
-    df["segment_name"] = df["segment_id"].map(SEGMENT_NAMES).fillna("Unclassified")
+    df["segment_id"] = df.apply(_assign_segment, axis=1)
+    df["segment_name"] = df["segment_id"].map(
+        SEGMENT_NAMES).fillna("Unclassified")
 
     # Activeness band label
     df["activeness_band"] = pd.cut(
@@ -218,10 +221,10 @@ def gen_user_segments(df=None, output_dir: str = None):
     # ── Per-segment summary (pure stats) ─────────────────────
     seg_rows = []
     for sid in sorted(df["segment_id"].unique()):
-        df_s  = df[df["segment_id"] == sid]
-        name  = SEGMENT_NAMES.get(sid, "Unclassified")
-        meta  = SEGMENT_META.get(sid, ("Accomplishment", "Epic Meaning", "neutral",
-                                       "Apply default strategy.", "Drive exercise completion."))
+        df_s = df[df["segment_id"] == sid]
+        name = SEGMENT_NAMES.get(sid, "Unclassified")
+        meta = SEGMENT_META.get(sid, ("Accomplishment", "Epic Meaning", "neutral",
+                                      "Apply default strategy.", "Drive exercise completion."))
         primary_drive, secondary_drive, tone, strategy, ns_lever = meta
 
         # Per-propensity averages (dynamic — works for any number of features)
@@ -248,7 +251,8 @@ def gen_user_segments(df=None, output_dir: str = None):
         row_dict.update({f"avg_{c}": v for c, v in prop_avgs.items()})
         seg_rows.append(row_dict)
 
-    seg_summary_df = pd.DataFrame(seg_rows).sort_values("segment_id").reset_index(drop=True)
+    seg_summary_df = pd.DataFrame(seg_rows).sort_values(
+        "segment_id").reset_index(drop=True)
 
     # ── Per-user output ───────────────────────────────────────
     # Keep only essential columns — no raw behavioral noise.
@@ -267,16 +271,20 @@ def gen_user_segments(df=None, output_dir: str = None):
         "activeness_band",
         "dominant_propensity",
         "dominant_propensity_score",
+        "preferred_hour",     # <--- Add this
+        "daily_frequency"     # <--- Add this (and any other columns you need)
     ]
 
     user_seg_df = df[[c for c in core_cols if c in df.columns]].copy()
 
     # Sort by segment_id then user_id
-    user_seg_df = user_seg_df.sort_values(["segment_id", "user_id"]).reset_index(drop=True)
+    user_seg_df = user_seg_df.sort_values(
+        ["segment_id", "user_id"]).reset_index(drop=True)
 
     save_csv(user_seg_df, "user_segments.csv", output_dir)
 
-    print(f"  [seg] {len(user_seg_df)} users across {len(seg_summary_df)} segments")
+    print(
+        f"  [seg] {len(user_seg_df)} users across {len(seg_summary_df)} segments")
     for _, r in seg_summary_df.iterrows():
         print(
             f"    {r['segment_id']}  {r['segment_name']:35s} "

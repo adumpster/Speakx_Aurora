@@ -1,62 +1,62 @@
-segment_id,segment_name,user_id,lifecycle_stage,age_band,region,activeness_score,churn_risk_score,activeness_band,dominant_propensity,dominant_propensity_score
-SEG_01,High-Active Power Users,US_25,paid,25-34,tier2,0.835,0.108,high,leaderboard_viewed,0.936
-SEG_01,High-Active Power Users,US_26,paid,25-34,tier2,0.704,0.147,high,leaderboard_viewed,0.82
-SEG_01,High-Active Power Users,US_32,paid,18-24,tier1,0.715,0.086,high,leaderboard_viewed,0.928
-SEG_04,Moderate-Active Feature Enthusiasts,US_1,paid,25-34,tier2,0.543,0.139,moderate,progress_checked,0.86
-SEG_04,Moderate-Active Feature Enthusiasts,US_13,paid,25-34,tier2,0.558,0.122,moderate,leaderboard_viewed,0.96
-SEG_04,Moderate-Active Feature Enthusiasts,US_17,paid,18-24,tier1,0.648,0.131,moderate,ai_tutor_used,0.812
-SEG_04,Moderate-Active Feature Enthusiasts,US_18,paid,25-34,tier2,0.526,0.103,moderate,progress_checked,0.88
-SEG_04,Moderate-Active Feature Enthusiasts,US_21,paid,35-44,tier3,0.518,0.109,moderate,leaderboard_viewed,0.932
-SEG_04,Moderate-Active Feature Enthusiasts,US_22,paid,35-44,tier3,0.529,0.083,moderate,ai_tutor_used,0.92
-SEG_04,Moderate-Active Feature Enthusiasts,US_24,paid,25-34,tier2,0.557,0.145,moderate,leaderboard_viewed,0.832
-SEG_04,Moderate-Active Feature Enthusiasts,US_29,paid,18-24,tier1,0.649,0.142,moderate,leaderboard_viewed,0.864
-SEG_04,Moderate-Active Feature Enthusiasts,US_30,paid,35-44,tier3,0.567,0.116,moderate,leaderboard_viewed,0.856
-SEG_04,Moderate-Active Feature Enthusiasts,US_31,paid,18-24,tier1,0.556,0.132,moderate,leaderboard_viewed,0.82
-SEG_04,Moderate-Active Feature Enthusiasts,US_33,paid,35-44,tier3,0.403,0.118,moderate,ai_tutor_used,0.852
-SEG_04,Moderate-Active Feature Enthusiasts,US_35,paid,35-44,tier3,0.546,0.11,moderate,ai_tutor_used,0.84
-SEG_04,Moderate-Active Feature Enthusiasts,US_36,paid,18-24,tier1,0.63,0.137,moderate,ai_tutor_used,0.86
-SEG_04,Moderate-Active Feature Enthusiasts,US_39,paid,35-44,tier3,0.615,0.134,moderate,ai_tutor_used,0.84
-SEG_04,Moderate-Active Feature Enthusiasts,US_4,paid,18-24,tier1,0.479,0.103,moderate,leaderboard_viewed,0.908
-SEG_04,Moderate-Active Feature Enthusiasts,US_41,paid,18-24,tier1,0.686,0.096,moderate,ai_tutor_used,0.808
-SEG_04,Moderate-Active Feature Enthusiasts,US_48,paid,18-24,tier1,0.413,0.129,moderate,ai_tutor_used,0.888
-SEG_04,Moderate-Active Feature Enthusiasts,US_49,paid,18-24,tier1,0.547,0.115,moderate,ai_tutor_used,0.976
-SEG_04,Moderate-Active Feature Enthusiasts,US_50,paid,18-24,tier1,0.531,0.09,moderate,ai_tutor_used,0.892
-SEG_04,Moderate-Active Feature Enthusiasts,US_59,paid,18-24,tier1,0.567,0.114,moderate,ai_tutor_used,0.972
-SEG_04,Moderate-Active Feature Enthusiasts,US_60,paid,18-24,tier1,0.509,0.124,moderate,ai_tutor_used,0.812
-SEG_04,Moderate-Active Feature Enthusiasts,US_61,paid,18-24,tier1,0.555,0.093,moderate,ai_tutor_used,0.916
-SEG_06,Moderate-Active Trial Activators,US_23,trial,18-24,tier1,0.422,0.328,moderate,leaderboard_viewed,0.932
-SEG_06,Moderate-Active Trial Activators,US_3,trial,25-34,tier2,0.442,0.113,moderate,leaderboard_viewed,0.804
-SEG_06,Moderate-Active Trial Activators,US_40,trial,18-24,tier1,0.414,0.128,moderate,leaderboard_viewed,0.904
-SEG_06,Moderate-Active Trial Activators,US_56,trial,18-24,tier1,0.422,0.104,moderate,ai_tutor_used,0.312
-SEG_08,Low-Active At-Risk Paid,US_12,paid,25-34,tier2,0.399,0.13,low,leaderboard_viewed,0.892
-SEG_08,Low-Active At-Risk Paid,US_19,paid,18-24,tier1,0.345,0.097,low,leaderboard_viewed,0.88
-SEG_08,Low-Active At-Risk Paid,US_38,paid,18-24,tier1,0.376,0.113,low,leaderboard_viewed,0.852
-SEG_08,Low-Active At-Risk Paid,US_52,paid,18-24,tier1,0.375,0.115,low,ai_tutor_used,0.872
-SEG_09,Low-Active Cold Trial,US_14,trial,35-44,tier3,0.247,0.136,low,leaderboard_viewed,0.848
-SEG_09,Low-Active Cold Trial,US_16,trial,25-34,tier2,0.267,0.147,low,ai_tutor_used,0.276
-SEG_09,Low-Active Cold Trial,US_20,trial,35-44,tier3,0.043,0.393,low,ai_tutor_used,0.096
-SEG_09,Low-Active Cold Trial,US_27,trial,35-44,tier3,0.396,0.152,low,leaderboard_viewed,0.908
-SEG_09,Low-Active Cold Trial,US_37,trial,18-24,tier1,0.363,0.141,low,ai_tutor_used,0.908
-SEG_09,Low-Active Cold Trial,US_43,trial,18-24,tier1,0.237,0.155,low,ai_tutor_used,0.948
-SEG_09,Low-Active Cold Trial,US_44,trial,18-24,tier1,0.32,0.129,low,ai_tutor_used,0.916
-SEG_09,Low-Active Cold Trial,US_51,trial,18-24,tier1,0.258,0.134,low,leaderboard_viewed,0.788
-SEG_09,Low-Active Cold Trial,US_53,trial,18-24,tier1,0.268,0.151,low,leaderboard_viewed,0.88
-SEG_09,Low-Active Cold Trial,US_55,trial,18-24,tier1,0.338,0.118,low,progress_checked,0.852
-SEG_09,Low-Active Cold Trial,US_6,trial,25-34,tier2,0.281,0.137,low,progress_checked,0.944
-SEG_09,Low-Active Cold Trial,US_8,trial,25-34,tier2,0.388,0.124,low,progress_checked,0.808
-SEG_09,Low-Active Cold Trial,US_9,trial,25-34,tier2,0.212,0.102,low,progress_checked,0.948
-SEG_11,Deep Churned,US_15,churned,18-24,tier1,0.024,0.991,low,ai_tutor_used,0.104
-SEG_11,Deep Churned,US_2,churned,25-34,tier2,0.022,0.978,low,progress_checked,0.748
-SEG_11,Deep Churned,US_28,churned,18-24,tier1,0.048,0.745,low,leaderboard_viewed,0.656
-SEG_11,Deep Churned,US_45,churned,18-24,tier3,0.021,0.979,low,leaderboard_viewed,0.704
-SEG_11,Deep Churned,US_47,churned,18-24,tier1,0.053,0.733,low,ai_tutor_used,0.108
-SEG_11,Deep Churned,US_5,churned,25-34,tier2,0.026,0.974,low,ai_tutor_used,0.156
-SEG_11,Deep Churned,US_54,churned,18-24,tier1,0.028,0.972,low,progress_checked,0.76
-SEG_12,Inactive High-Propensity,US_46,inactive,18-24,tier1,0.009,0.991,low,ai_tutor_used,0.712
-SEG_12,Inactive High-Propensity,US_7,inactive,35-44,tier3,0.014,0.986,low,leaderboard_viewed,0.7
-SEG_13,Inactive Low-Propensity,US_10,inactive,35-44,tier3,0.016,0.984,low,ai_tutor_used,0.088
-SEG_13,Inactive Low-Propensity,US_11,inactive,35-44,tier3,0.011,0.989,low,ai_tutor_used,0.056
-SEG_13,Inactive Low-Propensity,US_34,inactive,35-44,tier3,0.027,0.744,low,ai_tutor_used,0.076
-SEG_13,Inactive Low-Propensity,US_42,inactive,18-24,tier1,0.007,0.993,low,ai_tutor_used,0.048
-SEG_13,Inactive Low-Propensity,US_57,inactive,18-24,tier1,0.005,0.995,low,ai_tutor_used,0.024
-SEG_13,Inactive Low-Propensity,US_58,inactive,18-24,tier1,0.007,0.993,low,ai_tutor_used,0.096
+segment_id,segment_name,user_id,lifecycle_stage,age_band,region,activeness_score,churn_risk_score,activeness_band,dominant_propensity,dominant_propensity_score,preferred_hour
+SEG_01,High-Active Power Users,US_25,paid,25-34,tier2,0.835,0.108,high,leaderboard_viewed,0.936,20
+SEG_01,High-Active Power Users,US_26,paid,25-34,tier2,0.704,0.147,high,leaderboard_viewed,0.82,19
+SEG_01,High-Active Power Users,US_32,paid,18-24,tier1,0.715,0.086,high,leaderboard_viewed,0.928,22
+SEG_04,Moderate-Active Feature Enthusiasts,US_1,paid,25-34,tier2,0.543,0.139,moderate,progress_checked,0.86,7
+SEG_04,Moderate-Active Feature Enthusiasts,US_13,paid,25-34,tier2,0.558,0.122,moderate,leaderboard_viewed,0.96,8
+SEG_04,Moderate-Active Feature Enthusiasts,US_17,paid,18-24,tier1,0.648,0.131,moderate,ai_tutor_used,0.812,19
+SEG_04,Moderate-Active Feature Enthusiasts,US_18,paid,25-34,tier2,0.526,0.103,moderate,progress_checked,0.88,18
+SEG_04,Moderate-Active Feature Enthusiasts,US_21,paid,35-44,tier3,0.518,0.109,moderate,leaderboard_viewed,0.932,5
+SEG_04,Moderate-Active Feature Enthusiasts,US_22,paid,35-44,tier3,0.529,0.083,moderate,ai_tutor_used,0.92,20
+SEG_04,Moderate-Active Feature Enthusiasts,US_24,paid,25-34,tier2,0.557,0.145,moderate,leaderboard_viewed,0.832,19
+SEG_04,Moderate-Active Feature Enthusiasts,US_29,paid,18-24,tier1,0.649,0.142,moderate,leaderboard_viewed,0.864,20
+SEG_04,Moderate-Active Feature Enthusiasts,US_30,paid,35-44,tier3,0.567,0.116,moderate,leaderboard_viewed,0.856,21
+SEG_04,Moderate-Active Feature Enthusiasts,US_31,paid,18-24,tier1,0.556,0.132,moderate,leaderboard_viewed,0.82,19
+SEG_04,Moderate-Active Feature Enthusiasts,US_33,paid,35-44,tier3,0.403,0.118,moderate,ai_tutor_used,0.852,5
+SEG_04,Moderate-Active Feature Enthusiasts,US_35,paid,35-44,tier3,0.546,0.11,moderate,ai_tutor_used,0.84,18
+SEG_04,Moderate-Active Feature Enthusiasts,US_36,paid,18-24,tier1,0.63,0.137,moderate,ai_tutor_used,0.86,7
+SEG_04,Moderate-Active Feature Enthusiasts,US_39,paid,35-44,tier3,0.615,0.134,moderate,ai_tutor_used,0.84,13
+SEG_04,Moderate-Active Feature Enthusiasts,US_4,paid,18-24,tier1,0.479,0.103,moderate,leaderboard_viewed,0.908,15
+SEG_04,Moderate-Active Feature Enthusiasts,US_41,paid,18-24,tier1,0.686,0.096,moderate,ai_tutor_used,0.808,17
+SEG_04,Moderate-Active Feature Enthusiasts,US_48,paid,18-24,tier1,0.413,0.129,moderate,ai_tutor_used,0.888,18
+SEG_04,Moderate-Active Feature Enthusiasts,US_49,paid,18-24,tier1,0.547,0.115,moderate,ai_tutor_used,0.976,7
+SEG_04,Moderate-Active Feature Enthusiasts,US_50,paid,18-24,tier1,0.531,0.09,moderate,ai_tutor_used,0.892,19
+SEG_04,Moderate-Active Feature Enthusiasts,US_59,paid,18-24,tier1,0.567,0.114,moderate,ai_tutor_used,0.972,21
+SEG_04,Moderate-Active Feature Enthusiasts,US_60,paid,18-24,tier1,0.509,0.124,moderate,ai_tutor_used,0.812,22
+SEG_04,Moderate-Active Feature Enthusiasts,US_61,paid,18-24,tier1,0.555,0.093,moderate,ai_tutor_used,0.916,12
+SEG_06,Moderate-Active Trial Activators,US_23,trial,18-24,tier1,0.422,0.328,moderate,leaderboard_viewed,0.932,20
+SEG_06,Moderate-Active Trial Activators,US_3,trial,25-34,tier2,0.442,0.113,moderate,leaderboard_viewed,0.804,9
+SEG_06,Moderate-Active Trial Activators,US_40,trial,18-24,tier1,0.414,0.128,moderate,leaderboard_viewed,0.904,20
+SEG_06,Moderate-Active Trial Activators,US_56,trial,18-24,tier1,0.422,0.104,moderate,ai_tutor_used,0.312,22
+SEG_08,Low-Active At-Risk Paid,US_12,paid,25-34,tier2,0.399,0.13,low,leaderboard_viewed,0.892,19
+SEG_08,Low-Active At-Risk Paid,US_19,paid,18-24,tier1,0.345,0.097,low,leaderboard_viewed,0.88,20
+SEG_08,Low-Active At-Risk Paid,US_38,paid,18-24,tier1,0.376,0.113,low,leaderboard_viewed,0.852,18
+SEG_08,Low-Active At-Risk Paid,US_52,paid,18-24,tier1,0.375,0.115,low,ai_tutor_used,0.872,20
+SEG_09,Low-Active Cold Trial,US_14,trial,35-44,tier3,0.247,0.136,low,leaderboard_viewed,0.848,10
+SEG_09,Low-Active Cold Trial,US_16,trial,25-34,tier2,0.267,0.147,low,ai_tutor_used,0.276,20
+SEG_09,Low-Active Cold Trial,US_20,trial,35-44,tier3,0.043,0.393,low,ai_tutor_used,0.096,6
+SEG_09,Low-Active Cold Trial,US_27,trial,35-44,tier3,0.396,0.152,low,leaderboard_viewed,0.908,7
+SEG_09,Low-Active Cold Trial,US_37,trial,18-24,tier1,0.363,0.141,low,ai_tutor_used,0.908,19
+SEG_09,Low-Active Cold Trial,US_43,trial,18-24,tier1,0.237,0.155,low,ai_tutor_used,0.948,20
+SEG_09,Low-Active Cold Trial,US_44,trial,18-24,tier1,0.32,0.129,low,ai_tutor_used,0.916,11
+SEG_09,Low-Active Cold Trial,US_51,trial,18-24,tier1,0.258,0.134,low,leaderboard_viewed,0.788,11
+SEG_09,Low-Active Cold Trial,US_53,trial,18-24,tier1,0.268,0.151,low,leaderboard_viewed,0.88,19
+SEG_09,Low-Active Cold Trial,US_55,trial,18-24,tier1,0.338,0.118,low,progress_checked,0.852,19
+SEG_09,Low-Active Cold Trial,US_6,trial,25-34,tier2,0.281,0.137,low,progress_checked,0.944,8
+SEG_09,Low-Active Cold Trial,US_8,trial,25-34,tier2,0.388,0.124,low,progress_checked,0.808,13
+SEG_09,Low-Active Cold Trial,US_9,trial,25-34,tier2,0.212,0.102,low,progress_checked,0.948,8
+SEG_11,Deep Churned,US_15,churned,18-24,tier1,0.024,0.991,low,ai_tutor_used,0.104,20
+SEG_11,Deep Churned,US_2,churned,25-34,tier2,0.022,0.978,low,progress_checked,0.748,18
+SEG_11,Deep Churned,US_28,churned,18-24,tier1,0.048,0.745,low,leaderboard_viewed,0.656,23
+SEG_11,Deep Churned,US_45,churned,18-24,tier3,0.021,0.979,low,leaderboard_viewed,0.704,23
+SEG_11,Deep Churned,US_47,churned,18-24,tier1,0.053,0.733,low,ai_tutor_used,0.108,22
+SEG_11,Deep Churned,US_5,churned,25-34,tier2,0.026,0.974,low,ai_tutor_used,0.156,9
+SEG_11,Deep Churned,US_54,churned,18-24,tier1,0.028,0.972,low,progress_checked,0.76,11
+SEG_12,Inactive High-Propensity,US_46,inactive,18-24,tier1,0.009,0.991,low,ai_tutor_used,0.712,21
+SEG_12,Inactive High-Propensity,US_7,inactive,35-44,tier3,0.014,0.986,low,leaderboard_viewed,0.7,20
+SEG_13,Inactive Low-Propensity,US_10,inactive,35-44,tier3,0.016,0.984,low,ai_tutor_used,0.088,7
+SEG_13,Inactive Low-Propensity,US_11,inactive,35-44,tier3,0.011,0.989,low,ai_tutor_used,0.056,7
+SEG_13,Inactive Low-Propensity,US_34,inactive,35-44,tier3,0.027,0.744,low,ai_tutor_used,0.076,13
+SEG_13,Inactive Low-Propensity,US_42,inactive,18-24,tier1,0.007,0.993,low,ai_tutor_used,0.048,12
+SEG_13,Inactive Low-Propensity,US_57,inactive,18-24,tier1,0.005,0.995,low,ai_tutor_used,0.024,22
+SEG_13,Inactive Low-Propensity,US_58,inactive,18-24,tier1,0.007,0.993,low,ai_tutor_used,0.096,8

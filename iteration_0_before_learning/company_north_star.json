@@ -2,43 +2,38 @@
   "company": "SpeakX",
   "inferred_north_star": {
     "metric_name": "Monthly Retention",
-    "how_it_was_determined": "explicit_extraction",
-    "definition": "The percentage of trial users who convert to a monthly paid plan and complete an exercise within the month.",
-    "justification": "This metric captures the effectiveness of our onboarding process and user engagement strategy, which are critical for driving revenue growth.",
-    "measurable_proxy": "(trial→monthly converters * 100) / (total trial users)"
+    "how_it_was_determined": "scored_inference",
+    "definition": "Percentage of users who continue to use the app after a free trial period.",
+    "justification": "High revenue correlation and user value signal make Monthly Retention a strong candidate. Its actionability score is also high, indicating that it can be easily improved upon.",
+    "measurable_proxy": "(trial→monthly converters) * 100 / (trial users)"
   },
   "supporting_metrics": [
     {
-      "name": "Trial→Monthly Conversion",
-      "definition": "The percentage of trial users who convert to a monthly paid plan.",
-      "why_it_matters": "This metric indicates the success of our onboarding process and user acquisition strategy."
-    },
-    {
-      "name": "W1 Retention",
-      "definition": "The percentage of monthly converters who complete an exercise within the first week post-conversion.",
-      "why_it_matters": "This metric evaluates the effectiveness of our habit formation strategy and user engagement tactics."
+      "name": "Monthly Retention",
+      "definition": "Percentage of users who continue to use the app after a free trial period.",
+      "why_it_matters": "High revenue correlation and user value signal make Monthly Retention a strong candidate."
     }
   ],
   "lifecycle_stages": [
     {
       "stage": "trial",
       "day_range": "D0-D7",
-      "primary_goal": "Convert users to a monthly paid plan"
+      "primary_goal": "Get user to complete at least 1 exercise, feel the product value, and convert to a paid monthly plan."
     },
     {
       "stage": "paid",
       "day_range": "D8-D30",
-      "primary_goal": "Drive habit formation and user engagement"
+      "primary_goal": "Drive habit formation — at least 4 sessions/week."
     },
     {
       "stage": "churned",
       "day_range": "D31+",
-      "primary_goal": "Re-engage inactive users with personalized content"
+      "primary_goal": "Re-engage with personalized win-back content."
     },
     {
       "stage": "inactive",
       "day_range": "D31+",
-      "primary_goal": "Win back inactive users with limited-time offers"
+      "primary_goal": "Re-engage with personalized win-back content."
     }
   ],
   "generated_at": "2026-03-07",

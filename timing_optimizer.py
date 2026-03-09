@@ -1,266 +1,128 @@
-# timing_optimizer.py
-# ─────────────────────────────────────────────────────────────
-# Generates:
-#   - timing_recommendations.csv  (optimal windows per segment)
-#   - user_notification_schedule.csv  (per-user daily schedule)
-#
-# Logic:
-#   - Map preferred_hour → time window bucket per user
-#   - Score each window per segment using notif_open_rate_30d
-#   - Apply frequency guardrails (activeness → notifs/day)
-#   - Use LLM to enhance recommendations with reasoning
-# ─────────────────────────────────────────────────────────────
-
 import pandas as pd
 import numpy as np
-from llm import llm, safe_parse_json, save_csv
-from data_loader import load_data, add_derived_signals
-from kb_loader   import load_kb
-from config import TIME_WINDOWS, FREQ_BANDS
-
-NOTIFS_PER_DAY_MAX = 9
-NOTIFS_PER_DAY_MIN = 3
-UNINSTALL_GUARDRAIL_THRESHOLD = 0.02  # 2% → reduce by 2
+import os
+from data_loader import load_data  # Leverage his existing data loader!
 
 
-def _hour_to_window(hour: int) -> str:
-    """Map a preferred_hour (0-23) to the matching time window name."""
-    if 6 <= hour <= 8:
+def map_hour_to_window(hour):
+    """Maps an integer hour (0-23) to the 6 standard time windows."""
+    if pd.isna(hour):
+        return "evening"  # Safe fallback for missing data
+
+    hour = int(hour)
+    if 6 <= hour < 9:
         return "early_morning"
-    elif 9 <= hour <= 11:
+    elif 9 <= hour < 12:
         return "mid_morning"
-    elif 12 <= hour <= 14:
+    elif 12 <= hour < 15:
         return "afternoon"
-    elif 15 <= hour <= 17:
+    elif 15 <= hour < 18:
         return "late_afternoon"
-    elif 18 <= hour <= 20:
+    elif 18 <= hour < 21:
         return "evening"
-    elif 21 <= hour <= 23:
-        return "night"
     else:
-        return "early_morning"  # default for early-hours users (0-5)
+        return "night"
 
 
-def _get_notifs_per_day(activeness: float) -> int:
-    """Return notification count based on activeness score band."""
-    for band in FREQ_BANDS:
-        if band["min"] <= activeness <= band["max"]:
-            lo, hi = band["notifs_per_day_range"]
-            return int((lo + hi) / 2)
-    return NOTIFS_PER_DAY_MIN
+def generate_dynamic_timing_recommendations():
+    # Setup paths matching the new teammate repo structure
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    iteration_0_dir = os.path.join(script_dir, "iteration_0_before_learning")
+    segments_path = os.path.join(iteration_0_dir, "user_segments.csv")
 
+    os.makedirs(iteration_0_dir, exist_ok=True)
 
-def _build_schedule_for_user(
-    user: pd.Series,
-    templates_pool: list[str],
-    segment_windows: list[str],
-) -> list[dict]:
-    """
-    Build notif_1 … notif_9 rows for a single user.
-    Returns list of dicts with (notif_slot, template_id, time_window, channel).
-    """
-    n_notifs = _get_notifs_per_day(user.get("activeness_score", 0.5))
+    # 1. Load the dynamically generated user segments
+    try:
+        segments_df = pd.read_csv(segments_path)
+    except FileNotFoundError:
+        print(
+            f"Error: Could not find {segments_path}. Run segmentation first.")
+        return
 
-    # Build ordered window list: start from user's preferred window, cycle rest
-    user_window = _hour_to_window(int(user.get("preferred_hour", 9)))
-    window_order = [w["name"] for w in TIME_WINDOWS]
+    # 2. Load the raw data using HIS data_loader
+    print("Loading raw data to extract preferred_hour and daily_frequency...")
+    raw_df = load_data()
 
-    # Rotate so preferred window is first; then fill from segment optimal windows
-    preferred_idx = window_order.index(user_window) if user_window in window_order else 0
-    ordered = window_order[preferred_idx:] + window_order[:preferred_idx]
-
-    slots = []
-    for i in range(1, n_notifs + 1):
-        window = ordered[(i - 1) % len(ordered)]
-        tid    = templates_pool[(i - 1) % len(templates_pool)] if templates_pool else f"template_{i}"
-        slots.append({
-            "notif_slot":  f"notif_{i}",
-            "template_id": tid,
-            "time_window": window,
-            "channel":     "push_notification",
-        })
-    return slots
-
-
-def gen_timing_recommendations(
-    user_segments_df: pd.DataFrame = None,
-    df: pd.DataFrame = None,
-    output_dir: str = None,
-) -> pd.DataFrame:
-    """
-    Build timing_recommendations.csv.
-    One row per segment × lifecycle_stage with optimal window order + CTR estimates.
-    """
-    print("\n[Task2-3a/4] Generating: timing_recommendations.csv")
-
-    if df is None:
-        df = load_data()
-        df = add_derived_signals(df)
-
-    if user_segments_df is None:
-        from segmentation_engine import gen_user_segments
-        user_segments_df, _ = gen_user_segments(df, output_dir)
-
-    # Merge preferred_hour + notif_open_rate onto segment assignments
-    merged = user_segments_df.merge(
-        df[["user_id", "preferred_hour", "notif_open_rate_30d", "activeness_score"]],
-        on="user_id", how="left"
-    )
-    merged["time_window"] = merged["preferred_hour"].apply(_hour_to_window)
-
-    rows = []
-    combos = merged[["segment_id", "segment_name", "lifecycle_stage"]].drop_duplicates()
-
-    for _, combo in combos.iterrows():
-        sid   = combo["segment_id"]
-        sname = combo["segment_name"]
-        stage = combo["lifecycle_stage"]
-
-        sub = merged[(merged["segment_id"] == sid) & (merged["lifecycle_stage"] == stage)]
-        if len(sub) == 0:
-            continue
-
-        # Score each window by avg notif_open_rate of users who prefer it
-        window_scores = (
-            sub.groupby("time_window")["notif_open_rate_30d"]
-            .mean()
-            .sort_values(ascending=False)
-        )
-
-        best_windows = window_scores.index.tolist()[:3]
-        avg_open     = round(sub["notif_open_rate_30d"].mean(), 3)
-        avg_active   = round(sub["activeness_score"].mean(), 3)
-        notifs_day   = _get_notifs_per_day(avg_active)
-
-        # Ask LLM for brief reasoning on timing
-        raw = llm(
-            system="You are a notification timing expert. Output ONLY valid JSON.",
-            prompt=f"""
-KNOWLEDGE BANK (use Success Metrics and User Journey stages for context):
-{load_kb()}
-
-Segment : {sname} (id: {sid})
-Lifecycle: {stage}
-Top preferred windows (ranked by user preference + open rate): {best_windows}
-Avg notification open rate: {avg_open}
-Avg activeness score: {avg_active}
-Recommended notifications/day: {notifs_day}
-
-Time windows available: {[w['name'] for w in TIME_WINDOWS]}
-
-Return ONLY valid JSON:
-{{
-  "optimal_window_1": "<best window>",
-  "optimal_window_2": "<second best>",
-  "optimal_window_3": "<third best>",
-  "timing_rationale": "<1-2 sentences: why these windows work for this segment>",
-  "expected_ctr_lift": "<e.g. +3% vs random>",
-  "avoid_windows":    ["<window to avoid>"]
-}}"""
-        )
-        timing = safe_parse_json(raw, fallback={
-            "optimal_window_1":  best_windows[0] if len(best_windows) > 0 else "evening",
-            "optimal_window_2":  best_windows[1] if len(best_windows) > 1 else "early_morning",
-            "optimal_window_3":  best_windows[2] if len(best_windows) > 2 else "night",
-            "timing_rationale":  f"Based on {avg_open:.1%} avg open rate across {len(sub)} users.",
-            "expected_ctr_lift": "+2%",
-            "avoid_windows":     [],
-        })
-
-        rows.append({
-            "segment_id":        sid,
-            "segment_name":      sname,
-            "lifecycle_stage":   stage,
-            "user_count":        len(sub),
-            "avg_notif_open_rate": avg_open,
-            "avg_activeness":    avg_active,
-            "notifs_per_day":    notifs_day,
-            "optimal_window_1":  timing.get("optimal_window_1", "evening"),
-            "optimal_window_2":  timing.get("optimal_window_2", "early_morning"),
-            "optimal_window_3":  timing.get("optimal_window_3", "night"),
-            "timing_rationale":  timing.get("timing_rationale", ""),
-            "expected_ctr_lift": timing.get("expected_ctr_lift", "+2%"),
-            "avoid_windows":     "|".join(timing.get("avoid_windows", [])) if isinstance(timing.get("avoid_windows"), list) else "",
-        })
-
-    timing_df = pd.DataFrame(rows)
-    save_csv(timing_df, "timing_recommendations.csv", output_dir)
-    return timing_df
-
-
-def gen_user_notification_schedule(
-    user_segments_df:  pd.DataFrame = None,
-    templates_df:      pd.DataFrame = None,
-    timing_df:         pd.DataFrame = None,
-    df:                pd.DataFrame = None,
-    output_dir: str = None,
-) -> pd.DataFrame:
-    """
-    Build user_notification_schedule.csv.
-    One row per user with notif_1 … notif_9 (template_id, time, channel).
-    """
-    print("\n[Task2-4/4] Generating: user_notification_schedule.csv")
-
-    if df is None:
-        df = load_data()
-        df = add_derived_signals(df)
-
-    if user_segments_df is None:
-        from segmentation_engine import gen_user_segments
-        user_segments_df, _ = gen_user_segments(df, output_dir)
-
-    if timing_df is None:
-        timing_df = gen_timing_recommendations(user_segments_df, df, output_dir)
-
-    # Build a template pool per segment × stage (template_ids only)
-    template_pool_map = {}
-    if templates_df is not None and "template_id" in templates_df.columns:
-        for (sid, stage), grp in templates_df.groupby(["segment_id", "lifecycle_stage"]):
-            template_pool_map[(sid, stage)] = grp["template_id"].tolist()
-
-    # Merge user data
-    user_full = user_segments_df.merge(
-        df[["user_id", "preferred_hour", "activeness_score", "lifecycle_stage"]],
-        on=["user_id", "lifecycle_stage"], how="left"
+    # 3. Merge them together on user_id
+    df = pd.merge(
+        segments_df,
+        raw_df[['user_id', 'preferred_hour']],
+        on='user_id',
+        how='left'
     )
 
-    all_rows = []
-    for _, user in user_full.iterrows():
-        sid   = user["segment_id"]
-        stage = user["lifecycle_stage"]
+    # 4. Map every user's preferred hour to a standard window
+    df['time_window'] = df['preferred_hour'].apply(map_hour_to_window)
 
-        pool = template_pool_map.get((sid, stage), [f"{sid}_{stage}_fallback"])
+    timing_data = []
 
-        # Optimal windows from timing recommendations
-        timing_row = timing_df[
-            (timing_df["segment_id"] == sid) &
-            (timing_df["lifecycle_stage"] == stage)
-        ]
-        seg_windows = (
-            [timing_row.iloc[0]["optimal_window_1"],
-             timing_row.iloc[0]["optimal_window_2"],
-             timing_row.iloc[0]["optimal_window_3"]]
-            if len(timing_row) > 0 else ["evening", "early_morning", "night"]
-        )
+    # 5. Analyze preferences dynamically per segment
+    grouped = df.groupby(['segment_id', 'segment_name', 'activeness_band'])
 
-        slots = _build_schedule_for_user(user, pool, seg_windows)
+    for (seg_id, seg_name, act_band), group in grouped:
 
-        row = {
-            "user_id":         user["user_id"],
-            "segment_id":      sid,
-            "segment_name":    user.get("segment_name", ""),
-            "lifecycle_stage": stage,
-            "lifecycle_day":   int(user.get("days_since_signup", 0)),
-            "notifs_per_day":  len(slots),
-        }
-        for slot in slots:
-            col_prefix = slot["notif_slot"]
-            row[f"{col_prefix}_template_id"] = slot["template_id"]
-            row[f"{col_prefix}_time_window"] = slot["time_window"]
-            row[f"{col_prefix}_channel"]     = slot["channel"]
+        # --- NEW LOGIC: Determine notification volume based on Activeness Band ---
+        if act_band == "high":
+            num_windows = 3
+            urgency = "High frequency for habit reinforcement & streaks."
+        elif act_band == "moderate":
+            num_windows = 2
+            urgency = "Medium frequency to lower friction and build habit."
+        else:
+            # Low, Churned, or Inactive -> DO NOT SPAM.
+            num_windows = 1
+            urgency = "Low frequency (1 window). High-impact win-back only to prevent uninstalls."
 
-        all_rows.append(row)
+        # Get the top N most popular time windows for THIS specific segment
+        window_counts = group['time_window'].value_counts()
+        top_windows = window_counts.nlargest(num_windows).index.tolist()
 
-    schedule_df = pd.DataFrame(all_rows)
-    save_csv(schedule_df, "user_notification_schedule.csv", output_dir)
-    return schedule_df
+        # Fallback if a segment doesn't have enough data
+        if len(top_windows) < num_windows:
+            all_windows = ["early_morning", "evening", "afternoon",
+                           "mid_morning", "late_afternoon", "night"]
+            for w in all_windows:
+                if w not in top_windows:
+                    top_windows.append(w)
+                if len(top_windows) == num_windows:
+                    break
+
+        # Calculate dynamic baseline metrics based on the segment's actual average activeness
+        avg_activeness = group['activeness_score'].mean()
+        if pd.isna(avg_activeness):
+            avg_activeness = 0.1  # Default low for safety
+
+        # Adjust expected metrics to reflect reality (churned users will have terrible CTRs)
+        base_ctr = max(0.01, min(0.20, avg_activeness * 0.25))
+        base_eng = max(0.05, min(0.50, avg_activeness * 0.55))
+
+        for rank, window in enumerate(top_windows):
+            # Decay expected metrics for their 2nd/3rd notifications in a day
+            decay_factor = 1.0 - (rank * 0.15)
+
+            timing_data.append({
+                "segment_id": seg_id,
+                "segment_name": seg_name,
+                "recommended_time_window": window,
+                "expected_ctr": round(base_ctr * decay_factor, 3),
+                "expected_engagement": round(base_eng * decay_factor, 3),
+                "rationale": f"Rank {rank+1} preferred historical window. Strategy: {urgency}"
+            })
+
+    # 6. Export the dynamic recommendations
+    out_df = pd.DataFrame(timing_data)
+    # Sort nicely by segment ID
+    out_df = out_df.sort_values(
+        by=['segment_id', 'expected_ctr'], ascending=[True, False])
+
+    file_path = os.path.join(iteration_0_dir, "timing_recommendations.csv")
+    out_df.to_csv(file_path, index=False)
+
+    print(f"✅ Successfully generated {file_path} dynamically!")
+    print(
+        f"Mapped {len(out_df)} strategic window recommendations across {len(grouped)} MECE segments.")
+
+
+if __name__ == "__main__":
+    generate_dynamic_timing_recommendations()

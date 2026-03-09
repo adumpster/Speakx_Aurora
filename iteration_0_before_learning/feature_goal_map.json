@@ -1,47 +1,47 @@
 {
   "feature_goal_map": [
     {
-      "feature": "AI Tutor",
-      "feature_id": "feat_001",
-      "description": "Real-time conversational AI English teacher for users to practice speaking and receive instant feedback on pronunciation, grammar, and fluency.",
+      "feature": "Progress Reports",
+      "feature_id": "feat_002",
+      "description": "Weekly and monthly progress reports show user's performance, streak history, and comparative ranking.",
       "lifecycle_stage": [
         "inactive",
         "paid",
         "trial"
       ],
-      "primary_goal": "Drive habit formation through daily Sia conversations and improve user retention.",
+      "primary_goal": "Drive habit formation — at least 4 sessions/week.",
       "sub_goals": [
-        "Increase exercise completion rate among trial users",
-        "Boost streaks in paid users"
+        "Improve user engagement",
+        "Increase exercise completion rate"
       ],
-      "north_star_contribution": "Improves Monthly Retention by encouraging users to complete at least one exercise within the month",
+      "north_star_contribution": "W1 Retention — Percentage of users who complete an exercise in Week 1 post-conversion",
       "propensity_levers": [
-        "Personalized win-back content for inactive users",
-        "Upselling annual plan to paid users"
+        "Personalized win-back content",
+        "Progress loss framing"
       ],
-      "expected_outcome": "Increase monthly retention rate among trial and paid users by 10% within the next quarter"
+      "expected_outcome": "Average sessions/7d increase by 10%"
     },
     {
       "feature": "Leaderboard Viewed",
       "feature_id": "feat_002",
-      "description": "Viewing the leaderboard on a regular basis to stay competitive and track progress.",
+      "description": "Viewing leaderboard on the app",
       "lifecycle_stage": [
         "churned",
         "inactive",
         "paid",
         "trial"
       ],
-      "primary_goal": "Stay motivated and engaged with the app by regularly viewing the leaderboard.",
+      "primary_goal": "Increase user engagement and retention",
       "sub_goals": [
-        "Staying up-to-date with friends' progress",
-        "Tracking personal ranking"
+        "Boost motivation scores",
+        "Enhance social learning experience"
       ],
-      "north_star_contribution": "<how it moves Monthly Retention>",
+      "north_star_contribution": "Increases Monthly Retention by 10%",
       "propensity_levers": [
-        "Social Proof",
-        "Competition"
+        "Personalized notifications",
+        "Social sharing features"
       ],
-      "expected_outcome": "Increased likelihood of staying active in the app"
+      "expected_outcome": "Average monthly retention rate increases by 5%"
     },
     {
       "feature": "Progress Reports",
@@ -52,17 +52,17 @@
         "paid",
         "trial"
       ],
-      "primary_goal": "Drive habit formation — at least 4 sessions/week.",
+      "primary_goal": "Drive habit formation — at least 4 sessions/week",
       "sub_goals": [
-        "Show user their progress",
-        "Encourage users to continue practicing"
+        "<goal 1>",
+        "<goal 2>"
       ],
-      "north_star_contribution": "W1 Retention — The percentage of trial users who complete an exercise in Week 1 post-conversion",
+      "north_star_contribution": "W1 Retention — Percentage of converters completing an exercise in Week 1 post-conversion",
       "propensity_levers": [
-        "Personalized win-back content",
-        "Nostalgia framing"
+        "<lever 1>",
+        "<lever 2>"
       ],
-      "expected_outcome": "Increase W1 Retention by 10%"
+      "expected_outcome": "Increase W1 Retention by 10% through regular progress reports"
     }
   ],
   "generated_at": "2026-03-07",
