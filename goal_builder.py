@@ -631,11 +631,6 @@ def gen_segment_goals(
         "segment_id", "segment_name", "dominant_propensity",
         "lifecycle_stage", "phase_number", "phase_name", "day_range",
         "primary_goal", "sub_goal_1", "sub_goal_2", "sub_goal_3",
-        "day_focus_day1", "day_focus_day2", "day_focus_mid", "day_focus_end",
-        "primary_octolysis_drive", "hook_template",
-        "success_metric", "failure_signal", "escalation_action",
-        "personalization_lever",
-        "stat_avg_activeness", "stat_avg_churn_risk", "stat_avg_motivation",
     ]
     goals_df = goals_df[[c for c in col_order if c in goals_df.columns]]
 
