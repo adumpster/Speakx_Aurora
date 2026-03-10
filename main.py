@@ -131,13 +131,11 @@ def run_step(name: str, profile, out0: str):
         state["timing"] = gen_timing_recommendations(user_seg, profile.df, out0)
 
     elif name == "schedule":
-        from timing_optimizer import gen_user_notification_schedule
-        user_seg  = _df_or_load("user_segments", out0, "user_segments.csv")
-        templates = _df_or_load("templates",     out0, "message_templates.csv")
-        timing    = _df_or_load("timing",        out0, "timing_recommendations.csv")
-        state["schedule"] = gen_user_notification_schedule(
-            user_seg, templates, timing, profile.df, out0
-        )
+        from notification_scheduler import run_pipeline
+        run_pipeline()
+        out_path = os.path.join(out0, "user_notification_schedule.csv")
+        if os.path.exists(out_path):
+            state["schedule"] = pd.read_csv(out_path)
 
     # ── Task 3 ──────────────────────────────────────────────
 
