@@ -85,14 +85,25 @@ def add_derived_signals(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.copy()
 
-    # activeness_score (0-1)
-    sess_norm  = df["sessions_last_7d"].clip(0, 14) / 14
-    exer_norm  = df["exercises_completed_7d"].clip(0, 21) / 21
-    notif_norm = df["notif_open_rate_30d"].clip(0, 1)
-    streak_n   = df["streak_current"].clip(0, 30) / 30
+    # activeness_score — RFM-based composite (0-1)
+    #
+    # R (Recency)   — notification open rate in last 30 days:
+    #                 high open rate ⟹ recently engaged
+    # F (Frequency) — sessions in last 7 days (capped at 14 = 2/day):
+    #                 how often the user shows up
+    # M (Magnitude) — depth of engagement: exercises done + streak held
+    #                 captures the *quality* and continuity of each visit
+    #
+    # Weights: F carries most signal (0.40) because raw visit frequency is
+    # the strongest predictor of short-term retention; R and M share 0.30
+    # each to reward recent engagement and sustained depth.
+    r_score    = df["notif_open_rate_30d"].clip(0, 1)
+    f_score    = df["sessions_last_7d"].clip(0, 14) / 14
+    m_exer     = df["exercises_completed_7d"].clip(0, 21) / 21
+    m_streak   = df["streak_current"].clip(0, 30) / 30
+    m_score    = 0.5 * m_exer + 0.5 * m_streak
     df["activeness_score"] = (
-        0.30 * sess_norm + 0.30 * exer_norm +
-        0.20 * streak_n  + 0.20 * notif_norm
+        0.30 * r_score + 0.40 * f_score + 0.30 * m_score
     ).round(3)
 
     # churn_risk_score (0-1)

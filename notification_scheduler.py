@@ -77,7 +77,7 @@ def run_pipeline():
         seg_agg['activeness_score'] >= 0.4,
         seg_agg['activeness_score'] < 0.4
     ]
-    seg_agg['final_frequency'] = np.select(conditions, [8, 5, 2], default=2)
+    seg_agg['final_frequency'] = np.select(conditions, [8, 5, 3], default=3)
     
     freq_dict = seg_agg.set_index('clean_seg_id')['final_frequency'].to_dict()
     name_dict = seg_agg.set_index('clean_seg_id')['segment_name'].to_dict()
@@ -148,11 +148,8 @@ def run_pipeline():
         other_times = [w for w in ALL_WINDOWS if w not in pref_times]
         if not other_times: other_times = ALL_WINDOWS 
         
-        if freq <= 2:
-            # If freq is 2, send 1 to preferred time, 1 to another time to spread them out
-            pref_count = 1
-        else:
-            pref_count = max(1, int(freq * 0.75)) 
+            
+        pref_count = max(1, int(freq * 0.75)) 
         
         # Removed phase_name and primary_goal from the dictionary
         row_dict = {

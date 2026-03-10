@@ -111,26 +111,44 @@ def _add_dominant_propensity(df: pd.DataFrame) -> pd.DataFrame:
 
 # ── Segment assignment ────────────────────────────────────────
 
+def _compute_percentile_bands(df: pd.DataFrame) -> tuple:
+    """
+    Compute data-driven activeness band thresholds using percentiles.
+
+    Bottom 33 % of users  → 'low'
+    Middle 34 %           → 'moderate'
+    Top 33 %              → 'high'
+
+    Using percentiles instead of fixed values (0.4 / 0.7) ensures the
+    three bands are always populated regardless of the score distribution,
+    improving segment coverage across all lifecycle stages.
+    """
+    p_low  = float(df["activeness_score"].quantile(0.33))
+    p_high = float(df["activeness_score"].quantile(0.67))
+    return p_low, p_high
+
+
 def _assign_segment(row: pd.Series) -> str:
     """
     Assign a segment_id based on activeness band + lifecycle stage.
+    Reads the pre-computed 'activeness_band' column (low/moderate/high)
+    set by percentile cuts — no hardcoded score thresholds here.
     Uses dominant_propensity to further split within paid segments.
     All logic is data-driven — no feature names hardcoded.
     """
-    act   = row["activeness_score"]
-    stage = row["lifecycle_stage"]
+    band      = row.get("activeness_band", "low")
+    stage     = row["lifecycle_stage"]
     dom_score = row.get("dominant_propensity_score", 0)
 
     # ── HIGH band ────────────────────────────────────────────
-    if act >= 0.7:
+    if band == "high":
         if stage == "paid":
-            # Split by whether user has a strong dominant propensity
             return "SEG_01" if dom_score >= 0.6 else "SEG_02"
         if stage == "trial":
             return "SEG_03"
 
     # ── MODERATE band ────────────────────────────────────────
-    elif act >= 0.4:
+    elif band == "moderate":
         if stage == "paid":
             return "SEG_04" if dom_score >= 0.4 else "SEG_05"
         if stage == "trial":
@@ -200,17 +218,21 @@ def gen_user_segments(df=None, output_dir: str = None):
     # Add dominant propensity per user
     df = _add_dominant_propensity(df)
 
-    # Assign segment
+    # Percentile-based activeness band — must be computed BEFORE segment
+    # assignment so _assign_segment can read the band string directly.
+    p_low, p_high = _compute_percentile_bands(df)
+    print(f"  [seg] Activeness percentile thresholds: "
+          f"low<{p_low:.3f} ≤ moderate<{p_high:.3f} ≤ high")
+    df["activeness_band"] = pd.cut(
+        df["activeness_score"],
+        bins=[-0.001, p_low, p_high, 1.001],
+        labels=["low", "moderate", "high"]
+    ).astype(str)
+
+    # Assign segment (reads activeness_band, not raw score thresholds)
     print("  [seg] Assigning MECE segments ...")
     df["segment_id"]   = df.apply(_assign_segment, axis=1)
     df["segment_name"] = df["segment_id"].map(SEGMENT_NAMES).fillna("Unclassified")
-
-    # Activeness band label
-    df["activeness_band"] = pd.cut(
-        df["activeness_score"],
-        bins=[-0.001, 0.4, 0.7, 1.001],
-        labels=["low", "moderate", "high"]
-    ).astype(str)
 
     seg_counts = df["segment_id"].value_counts().sort_index().to_dict()
     print(f"  [seg] Distribution: {seg_counts}")
