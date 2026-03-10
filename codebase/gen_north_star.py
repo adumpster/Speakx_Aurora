@@ -25,14 +25,23 @@ def gen_north_star(profile: DataProfile, output_dir: str = None) -> dict:
         system="You are a data extraction engine. Output ONLY valid JSON, no explanation.",
         prompt=f"""KNOWLEDGE BASE:\n{kb}\n\nDATASET SUMMARY:\n{profile.summary}
 
-Search the KB for any metric explicitly called "north star", "primary metric",
-"most important metric", or "key metric".
+Look at the KNOWLEDGE BASE above. Is there any section heading, label, or bold
+text that designates a specific metric as the company's north star, primary
+metric, most important metric, or key metric?
+
+Examples of what to look for:
+- A section called "North Star Metric" followed by a metric name
+- A label like "Primary North Star: <metric>" or "Key Metric: <metric>"
+- Any statement like "our north star is <metric>"
+
+If such a designation exists, set "explicitly_stated" to true and extract the
+metric name and the exact line/sentence from the KB.
 
 Return ONLY a single JSON object (not an array):
 {{
   "explicitly_stated": true,
   "metric_name": "<exact metric name if found, else null>",
-  "exact_quote": "<the sentence from the KB that states it, else null>"
+  "exact_quote": "<the exact line from the KB that designates it, else null>"
 }}"""
     )
     extracted = _unwrap(safe_parse_json(raw_l1, fallback={"explicitly_stated": False}))

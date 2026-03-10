@@ -114,9 +114,9 @@ def run_step(name: str, profile, out0: str):
 
     elif name == "themes":
         from comm_themes import gen_communication_themes
-        user_seg = _df_or_load("user_segments", out0, "user_segments.csv")
-        seg_summ = state.get("seg_summary") or None
-        state["themes"] = gen_communication_themes(user_seg, seg_summ, df=profile.df, output_dir=out0)
+        user_seg  = _df_or_load("user_segments", out0, "user_segments.csv")
+        seg_goals = _df_or_load("goals",         out0, "segment_goals.csv")
+        state["themes"] = gen_communication_themes(user_seg, seg_goals, df=profile.df, output_dir=out0)
 
     elif name == "templates":
         from message_template_gen import gen_message_templates

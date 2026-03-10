@@ -16,66 +16,66 @@
   "hook_taxonomy": [
     {
       "core_drive": "Epic Meaning",
-      "application": "Join the community of 1M+ learners transforming their careers with SpeakX.",
+      "application": "Join the SpeakX community and transform your career with confidence.",
       "example_phrases": [
-        "You're part of a movement!",
-        "Transform your career with SpeakX!"
+        "You're one step closer to fluency!",
+        "Unlock your full potential in English."
       ]
     },
     {
       "core_drive": "Accomplishment",
-      "application": "Complete 5 lessons and keep the momentum going with SpeakX's AI-powered English learning app.",
+      "application": "Congratulations! You've completed 5 lessons. Keep the momentum and reach new heights in your career.",
       "example_phrases": [
-        "You got this!",
-        "5 lessons down, many more to go!"
+        "You're crushing it!",
+        "Every small win brings you closer to fluency."
       ]
     },
     {
       "core_drive": "Empowerment",
-      "application": "Choose your learning path today with SpeakX's flexible and fun English language courses.",
+      "application": "Take control of your English learning journey today. Choose from our expert-led lessons and start achieving your goals.",
       "example_phrases": [
-        "Take control of your English skills!",
-        "Learn at your own pace with SpeakX."
+        "It's time to take the lead!",
+        "Unlock your potential with SpeakX."
       ]
     },
     {
       "core_drive": "Ownership",
-      "application": "Your 50 coins are waiting to be spent on premium content with SpeakX.",
+      "application": "Your progress is waiting for you. Claim your 50 coins and start spending them on lessons that matter most to you.",
       "example_phrases": [
-        "Earn and redeem!",
-        "Get the most out of your SpeakX experience!"
+        "You own this journey!",
+        "Make every coin count."
       ]
     },
     {
       "core_drive": "Social Influence",
-      "application": "3 friends joined this week. Invite more and become part of a supportive community!",
+      "application": "3 friends have joined the SpeakX community this week. Invite more and become part of a supportive network that's changing lives.",
       "example_phrases": [
-        "You're not alone!",
-        "Join the conversation with SpeakX's community!"
+        "Join the movement!",
+        "Be part of something bigger than yourself."
       ]
     },
     {
       "core_drive": "Scarcity",
-      "application": "Only 2 days left in your trial! Don't miss out on this opportunity to transform your English skills.",
+      "application": "Only 2 days left in your trial! Don't miss out on this opportunity to transform your career. Sign up now and start learning.",
       "example_phrases": [
-        "Limited time offer!",
-        "Don't let the trial end – upgrade now!"
+        "Last chance!",
+        "Don't let this offer slip away."
       ]
     },
     {
       "core_drive": "Unpredictability",
-      "application": "Surprise reward inside today's lesson with SpeakX's AI-powered English learning app!",
+      "application": "Surprise reward inside today's lesson! You never know what you might discover.",
       "example_phrases": [
-        "Surprise and delight!",
-        "What's in store for you?"
+        "Something exciting is coming...",
+        "The best is yet to come."
       ]
     },
     {
       "core_drive": "Loss Avoidance",
-      "application": "Your 7-day streak is at risk! Reactivate your account now to avoid losing progress.",
+      "application": "Your 7-day streak is at risk. Don't let it slip away. Stay focused and keep learning.",
       "example_phrases": [
-        "Don't let it slip away!",
-        "Reclaim your momentum with SpeakX."
+        "Don't give up!",
+        "Stay on track and achieve your goals."
       ]
     }
   ],
@@ -100,72 +100,67 @@
         "Social Influence"
       ],
       "hook_intensity": "high",
-      "tone_rationale": "Motivational and encouraging tones are essential to activate users during the trial phase."
+      "tone_rationale": "Motivational language to drive trial engagement and encourage users to take action."
     },
     {
       "lifecycle_stage": "paid",
       "allowed_tones": [
-        "Celebratory",
-        "Urgent (mild)",
-        "Friendly"
+        "Informative",
+        "Urgent (mild)"
       ],
-      "disallowed_tones": [
-        "Fear-mongering",
-        "Condescending"
-      ],
+      "disallowed_tones": [],
       "primary_drives": [
         "Epic Meaning",
         "Accomplishment",
-        "Empowerment"
+        "Ownership"
       ],
       "secondary_drives": [
-        "Ownership",
-        "Social Influence"
+        "Social Influence",
+        "Scarcity"
       ],
-      "hook_intensity": "high",
-      "tone_rationale": "Celebratory tones acknowledge user progress, while urgent mild tones encourage continued learning."
+      "hook_intensity": "medium",
+      "tone_rationale": "Informative language to educate users on the benefits of paid subscription, while using a mild sense of urgency to encourage renewal."
     },
     {
       "lifecycle_stage": "churned",
       "allowed_tones": [
-        "Friendly",
-        "Informative"
+        "Loss Avoidance",
+        "Social Influence"
       ],
       "disallowed_tones": [
         "Shaming",
         "Aggressive sales pressure"
       ],
       "primary_drives": [
-        "Loss Avoidance",
-        "Social Influence"
+        "Epic Meaning",
+        "Accomplishment",
+        "Ownership"
       ],
       "secondary_drives": [
-        "Epic Meaning",
-        "Accomplishment"
+        "Scarcity",
+        "Unpredictability"
       ],
       "hook_intensity": "low",
-      "tone_rationale": "Friendly and informative tones aim to re-engage users without being too pushy."
+      "tone_rationale": "Loss avoidance language to re-engage churned users, while using social influence to encourage them to try again."
     },
     {
       "lifecycle_stage": "inactive",
       "allowed_tones": [
-        "Informative",
-        "Urgent (mild)"
-      ],
-      "disallowed_tones": [
-        "Shaming",
-        "Aggressive sales pressure"
-      ],
-      "primary_drives": [
-        "Loss Avoidance",
+        "Unpredictability",
         "Social Influence"
       ],
-      "secondary_drives": [
+      "disallowed_tones": [],
+      "primary_drives": [
         "Epic Meaning",
-        "Accomplishment"
+        "Accomplishment",
+        "Ownership"
       ],
-      "hook_intensity": "low",
-      "tone_rationale": "Informative tones provide context, while urgent mild tones encourage reactivation."
+      "secondary_drives": [
+        "Scarcity",
+        "Loss Avoidance"
+      ],
+      "hook_intensity": "medium",
+      "tone_rationale": "Unpredictability language to surprise inactive users and encourage them to try again, while using social influence to make the experience more engaging."
     }
   ],
   "source": "KB Ethical Communication Guidelines",

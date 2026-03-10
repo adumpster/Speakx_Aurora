@@ -3,37 +3,52 @@
   "inferred_north_star": {
     "metric_name": "Monthly Retention",
     "how_it_was_determined": "explicit_extraction",
-    "definition": "Percentage of trial users who convert to a monthly plan and complete at least one exercise within the month.",
-    "justification": "This metric captures the effectiveness of our onboarding process and user engagement strategy, which are critical for driving long-term retention and revenue growth.",
-    "measurable_proxy": "(trial→monthly converters * 100) / (total trial users)"
+    "definition": "The percentage of trial users who convert to a monthly paid plan AND complete at least one exercise within that month.",
+    "justification": "This metric is the primary focus because it directly impacts user acquisition and revenue growth. Monthly Retention is a strong indicator of user engagement and loyalty, which are crucial for long-term success.",
+    "measurable_proxy": "(trial → monthly converters who complete ≥1 exercise) / (total trial users) × 100"
   },
   "supporting_metrics": [
     {
+      "name": "Trial → Monthly Conversion Rate",
+      "definition": "% of trial users who upgrade within 7 days",
+      "why_it_matters": "This metric helps track the effectiveness of our onboarding process and identify areas for improvement."
+    },
+    {
       "name": "W1 Retention",
-      "definition": "Percentage of monthly plan converters who complete an exercise in Week 1 post-conversion.",
-      "why_it_matters": "This metric provides insight into the effectiveness of our habit formation strategy and user engagement tactics."
+      "definition": "% of new paid users who complete an exercise in their first week post-conversion",
+      "why_it_matters": "This metric evaluates the success of our retention strategies and ensures that users are engaged and motivated throughout their journey."
+    },
+    {
+      "name": "D30 Streak Rate",
+      "definition": "% of paid users who maintain a streak of ≥5 days in their first month",
+      "why_it_matters": "This metric assesses the impact of our streak system on user engagement and habit formation."
+    },
+    {
+      "name": "Referral Rate",
+      "definition": "% of paid users who invite at least one friend",
+      "why_it_matters": "This metric highlights the effectiveness of our referral program in driving word-of-mouth marketing and increasing user acquisition."
     }
   ],
   "lifecycle_stages": [
     {
       "stage": "trial",
       "day_range": "D0-D7",
-      "primary_goal": "Get user to complete at least 1 exercise, feel the product value, and convert to a paid monthly plan."
+      "primary_goal": "Convert to a monthly paid plan"
     },
     {
       "stage": "paid",
       "day_range": "D8-D30",
-      "primary_goal": "Drive habit formation — at least 4 sessions/week."
+      "primary_goal": "Build daily practice habit and drive W1 Retention"
     },
     {
       "stage": "churned",
       "day_range": "D31+",
-      "primary_goal": "Re-engage with personalized win-back content."
+      "primary_goal": "Re-activate with nostalgia and time-limited offer"
     },
     {
       "stage": "inactive",
       "day_range": "D31+",
-      "primary_goal": "Reframe setbacks as opportunities and celebrate small wins."
+      "primary_goal": "Trigger one micro-action with zero friction"
     }
   ],
   "generated_at": "2026-03-07",

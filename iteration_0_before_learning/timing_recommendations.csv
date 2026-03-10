@@ -1,13 +1,14 @@
 segment_id,segment_name,recommended_time_window,expected_ctr,expected_engagement,rationale
-SEG_01,High-Active Power Users,evening,0.188,0.413,Rank 1 preferred historical window. Strategy: High frequency for habit reinforcement & streaks.
-SEG_01,High-Active Power Users,night,0.16,0.351,Rank 2 preferred historical window. Strategy: High frequency for habit reinforcement & streaks.
-SEG_01,High-Active Power Users,early_morning,0.131,0.289,Rank 3 preferred historical window. Strategy: High frequency for habit reinforcement & streaks.
-SEG_04,Moderate-Active Feature Enthusiasts,evening,0.138,0.303,Rank 1 preferred historical window. Strategy: Medium frequency to lower friction and build habit.
-SEG_04,Moderate-Active Feature Enthusiasts,night,0.117,0.258,Rank 2 preferred historical window. Strategy: Medium frequency to lower friction and build habit.
-SEG_06,Moderate-Active Trial Activators,evening,0.106,0.234,Rank 1 preferred historical window. Strategy: Medium frequency to lower friction and build habit.
-SEG_06,Moderate-Active Trial Activators,mid_morning,0.09,0.199,Rank 2 preferred historical window. Strategy: Medium frequency to lower friction and build habit.
-SEG_08,Low-Active At-Risk Paid,evening,0.093,0.206,Rank 1 preferred historical window. Strategy: Low frequency (1 window). High-impact win-back only to prevent uninstalls.
-SEG_09,Low-Active Cold Trial,evening,0.07,0.153,Rank 1 preferred historical window. Strategy: Low frequency (1 window). High-impact win-back only to prevent uninstalls.
+SEG_01,High-Active Power Users,evening,0.152,0.335,Rank 1 preferred historical window. Strategy: High frequency for habit reinforcement & streaks.
+SEG_01,High-Active Power Users,night,0.13,0.285,Rank 2 preferred historical window. Strategy: High frequency for habit reinforcement & streaks.
+SEG_01,High-Active Power Users,early_morning,0.107,0.235,Rank 3 preferred historical window. Strategy: High frequency for habit reinforcement & streaks.
+SEG_04,Moderate-Active Feature Enthusiasts,evening,0.109,0.239,Rank 1 preferred historical window. Strategy: Medium frequency to lower friction and build habit.
+SEG_04,Moderate-Active Feature Enthusiasts,night,0.093,0.204,Rank 2 preferred historical window. Strategy: Medium frequency to lower friction and build habit.
+SEG_06,Moderate-Active Trial Activators,evening,0.105,0.23,Rank 1 preferred historical window. Strategy: Medium frequency to lower friction and build habit.
+SEG_06,Moderate-Active Trial Activators,early_morning,0.089,0.196,Rank 2 preferred historical window. Strategy: Medium frequency to lower friction and build habit.
+SEG_07,Moderate-Active Trial Fence-Sitters,mid_morning,0.072,0.158,Rank 1 preferred historical window. Strategy: Medium frequency to lower friction and build habit.
+SEG_07,Moderate-Active Trial Fence-Sitters,early_morning,0.061,0.134,Rank 2 preferred historical window. Strategy: Medium frequency to lower friction and build habit.
+SEG_09,Low-Active Cold Trial,evening,0.053,0.117,Rank 1 preferred historical window. Strategy: Low frequency (1 window). High-impact win-back only to prevent uninstalls.
 SEG_11,Deep Churned,night,0.01,0.05,Rank 1 preferred historical window. Strategy: Low frequency (1 window). High-impact win-back only to prevent uninstalls.
 SEG_12,Inactive High-Propensity,night,0.01,0.05,Rank 1 preferred historical window. Strategy: Low frequency (1 window). High-impact win-back only to prevent uninstalls.
 SEG_13,Inactive Low-Propensity,early_morning,0.01,0.05,Rank 1 preferred historical window. Strategy: Low frequency (1 window). High-impact win-back only to prevent uninstalls.

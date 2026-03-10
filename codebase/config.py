@@ -13,7 +13,7 @@ from pathlib import Path
 # Project root: .../aurora_codebase
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-KB_PATH        = str(BASE_DIR / "speakx_kb.txt")                 # company knowledge base (plain text / markdown)
+KB_PATH        = str(BASE_DIR / "knowledge_bank.md")                 # company knowledge base (plain text / markdown)
 USER_DATA_PATH = str(BASE_DIR / "user_behavioral_data.csv")      # input behavioural CSV
 OUTPUT_DIR     = str(BASE_DIR / "iteration_0_before_learning")   # primary output dir (Task 1 & 2)
 OUTPUT_DIR_0   = OUTPUT_DIR                                     # alias (before learning)
