@@ -40,6 +40,53 @@ TEMPLATES_PER_COMBO = 5
 MAX_RETRIES         = 3
 MAX_WORKERS         = 2
 
+# ── Message Format Archetypes (one per template slot) ─────────
+# Each archetype defines a distinct structural pattern so the 5
+# templates for the same Segment × Phase are stylistically varied.
+MESSAGE_FORMATS = [
+    {
+        "id":          "direct_cta",
+        "name":        "Direct CTA",
+        "description": "Imperative, action-first. Lead with a strong verb. No frills.",
+        "example":     "Title: 'Start Today's Session' | Body: 'Three minutes is all it takes. Open now and keep your streak alive.'",
+    },
+    {
+        "id":          "question_hook",
+        "name":        "Question Hook",
+        "description": "Open with a short rhetorical question that creates cognitive engagement.",
+        "example":     "Title: 'Ready to beat yesterday?' | Body: 'Your last score was 72. Can you top it in 5 minutes today?'",
+    },
+    {
+        "id":          "social_proof",
+        "name":        "Social Proof",
+        "description": "Reference peers, ranks, or aggregate stats to trigger social motivation.",
+        "example":     "Title: '1,400 learners practiced today' | Body: 'Don't fall behind — your peers are moving forward. Join them now.'",
+    },
+    {
+        "id":          "insight_tip",
+        "name":        "Insight / Tip",
+        "description": "Lead with a surprising fact, stat, or micro-tip relevant to the goal.",
+        "example":     "Title: 'Tip: 10 min daily beats 2 hr weekly' | Body: 'Consistency builds fluency. One short session now keeps progress compounding.'",
+    },
+    {
+        "id":          "challenge",
+        "name":        "Challenge / Gamified",
+        "description": "Frame the action as a personal challenge, game, or streak milestone.",
+        "example":     "Title: 'Day 5 Challenge Unlocked' | Body: 'You're on a roll — tackle today's challenge to unlock your next badge.'",
+    },
+]
+
+
+def _formats_reference() -> str:
+    lines = []
+    for i, f in enumerate(MESSAGE_FORMATS, 1):
+        lines.append(
+            f'  Format {i} — {f["name"]} ({f["id"]})\n'
+            f'    Rule: {f["description"]}\n'
+            f'    Example: {f["example"]}'
+        )
+    return "\n".join(lines)
+
 
 # ── Helpers ───────────────────────────────────────────────────
 
@@ -120,6 +167,7 @@ def _fallback_row(
     feature_ref:   str,
     idx:           int,
 ) -> dict:
+    slot_idx = max(0, min(idx - 1, len(MESSAGE_FORMATS) - 1))
     return {
         "template_id":   _make_template_id(segment_id, phase_name, idx),
         "segment_id":    segment_id,
@@ -136,10 +184,10 @@ def _fallback_row(
         "title_hi":      "Chalo aage badho!",
         "body_hi":       "Tumhari mehnat rang la rahi hai. Aaj ek session karo, streak bachao.",
         "hook_type":     primary_theme,
+        "format_type":   MESSAGE_FORMATS[slot_idx]["id"],
         "cta_en":        "Start Now",
         "cta_hi":        "Abhi Shuru Karo",
         "feature_ref":   feature_ref,
-        "journey_day":   "D1",
         "iteration":     0,
     }
 
@@ -165,8 +213,15 @@ def _gen_templates_for_combo(
     One llm() call (up to MAX_RETRIES) → exactly 5 template rows.
     Hindi is transcreated — same psychological urgency, natural conversational tone.
     """
-    drives_block = _drives_reference()
-    kb_context   = load_kb()
+    drives_block  = _drives_reference()
+    formats_block = _formats_reference()
+    kb_context    = load_kb()
+
+    # Pre-assign one format to each of the 5 template slots
+    slot_formats = "\n".join(
+        f'  Template {i+1}: format_type = "{MESSAGE_FORMATS[i]["id"]}"  ({MESSAGE_FORMATS[i]["name"]})'
+        for i in range(TEMPLATES_PER_COMBO)
+    )
 
     prompt_text = f"""
 APP KNOWLEDGE BANK:
@@ -186,12 +241,20 @@ Feature Focus  : {feature_ref}
 Octolysis 8 Core Drives reference:
 {drives_block}
 
+Message Format Archetypes:
+{formats_block}
+
+=== SLOT ASSIGNMENTS ===
+Each template MUST use BOTH an assigned format AND a distinct Octolysis hook:
+{slot_formats}
+
 === TASK ===
 Write EXACTLY 5 distinct push notification templates for this segment × phase.
 
 RULES:
 1. Each of the 5 must use a DIFFERENT Octolysis hook_type from the drives above.
-2. Distribute journey_day logically across the phase: {day_range}.
+2. Each template MUST match its assigned format_type slot above — the structure and
+   opening style must clearly reflect that format archetype.
 3. English: short, punchy, action-oriented. Title ≤ 8 words. Body ≤ 20 words. CTA ≤ 4 words.
 4. Hindi/Hinglish: TRANSCREATE — do NOT translate literally. Keep identical psychological
    urgency but use natural, conversational Hindi that an Indian professional/student
@@ -202,15 +265,15 @@ RULES:
 Return ONLY a valid JSON array of exactly 5 objects — no wrapper, no explanation:
 [
   {{
-    "title_en":  "<English title — max 8 words>",
-    "body_en":   "<English body — max 20 words>",
-    "cta_en":    "<English CTA — max 4 words>",
-    "title_hi":  "<Transcreated Hindi/Hinglish title>",
-    "body_hi":   "<Transcreated Hindi/Hinglish body>",
-    "cta_hi":    "<Hindi CTA — max 4 words>",
-    "hook_type": "<exact Octolysis drive name>",
-    "feature_ref": "<{feature_ref} or most relevant feature>",
-    "journey_day": "<specific day within {day_range}>"
+    "title_en":    "<English title — max 8 words>",
+    "body_en":     "<English body — max 20 words>",
+    "cta_en":      "<English CTA — max 4 words>",
+    "title_hi":    "<Transcreated Hindi/Hinglish title>",
+    "body_hi":     "<Transcreated Hindi/Hinglish body>",
+    "cta_hi":      "<Hindi CTA — max 4 words>",
+    "hook_type":   "<exact Octolysis drive name>",
+    "format_type": "<assigned format_type id for this slot>",
+    "feature_ref": "<{feature_ref} or most relevant feature>"
   }}
 ]"""
 
@@ -226,6 +289,8 @@ Return ONLY a valid JSON array of exactly 5 objects — no wrapper, no explanati
         if attempt < MAX_RETRIES:
             print(f"    [retry {attempt}/{MAX_RETRIES}] got {len(items)} templates, need {TEMPLATES_PER_COMBO}")
 
+    valid_format_ids = {f["id"] for f in MESSAGE_FORMATS}
+
     rows = []
     for t_idx, t in enumerate(items[:TEMPLATES_PER_COMBO], 1):
         if not isinstance(t, dict):
@@ -233,6 +298,10 @@ Return ONLY a valid JSON array of exactly 5 objects — no wrapper, no explanati
         hook = t.get("hook_type", primary_theme)
         if hook not in valid_themes:
             hook = primary_theme
+        # Use LLM-returned format_type if valid; otherwise fall back to the slot assignment
+        fmt = t.get("format_type", MESSAGE_FORMATS[t_idx - 1]["id"])
+        if fmt not in valid_format_ids:
+            fmt = MESSAGE_FORMATS[t_idx - 1]["id"]
         rows.append({
             "template_id":     _make_template_id(segment_id, phase_name, t_idx),
             "segment_id":      segment_id,
@@ -251,8 +320,8 @@ Return ONLY a valid JSON array of exactly 5 objects — no wrapper, no explanati
             "body_hi":         t.get("body_hi", ""),
             "cta_hi":          t.get("cta_hi", "Abhi Shuru Karo"),
             "hook_type":       hook,
+            "format_type":     fmt,
             "feature_ref":     t.get("feature_ref", feature_ref),
-            "journey_day":     t.get("journey_day", "D1"),
             "iteration":       0,
         })
 

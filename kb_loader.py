@@ -19,7 +19,7 @@
 # ─────────────────────────────────────────────────────────────
 
 import os
-from config import KB_PATH, KB_MAX_CHARS
+from config import KB_PATH
 
 
 # ── Module-level cache so the file is only read once ─────────
@@ -47,11 +47,6 @@ def load_kb(path: str = KB_PATH) -> str:
 
     with open(path, "r", encoding="utf-8") as f:
         raw = f.read().strip()
-
-    # Truncate if the file is unusually large (protects context window)
-    if len(raw) > KB_MAX_CHARS:
-        print(f"  [kb] KB is {len(raw)} chars — truncating to {KB_MAX_CHARS} chars.")
-        raw = raw[:KB_MAX_CHARS] + "\n... [truncated]"
 
     _kb_cache = raw
     print(f"  [kb] Loaded KB: {len(_kb_cache)} chars from '{path}'")
