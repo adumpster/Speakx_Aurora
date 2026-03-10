@@ -37,10 +37,55 @@ def llm(system: str, prompt: str, temperature: float = 0.3) -> str:
 
 # ── JSON parsing helpers ──────────────────────────────────────
 
+def _fix_invalid_escapes(s: str) -> str:
+    """Replace backslashes not part of a valid JSON escape sequence with \\\\."""
+    # Valid JSON escapes: \", \\, \/, \b, \f, \n, \r, \t, \uXXXX
+    return re.sub(r'\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})', r'\\\\', s)
+
+
+def _fix_literal_control_chars(s: str) -> str:
+    """Replace literal newlines/tabs inside JSON string values with their escape equivalents."""
+    result = []
+    in_string = False
+    escape_next = False
+    for ch in s:
+        if escape_next:
+            result.append(ch)
+            escape_next = False
+        elif ch == '\\' and in_string:
+            result.append(ch)
+            escape_next = True
+        elif ch == '"':
+            result.append(ch)
+            in_string = not in_string
+        elif in_string and ch == '\n':
+            result.append('\\n')
+        elif in_string and ch == '\r':
+            result.append('\\r')
+        elif in_string and ch == '\t':
+            result.append('\\t')
+        else:
+            result.append(ch)
+    return ''.join(result)
+
+
+def _extract_fields_regex(s: str) -> dict | None:
+    """
+    Last-resort regex extraction for flat LLM JSON objects.
+    Handles unescaped quotes inside string values by stopping at the next
+    unescaped quote, yielding at least partial (useful) field values.
+    """
+    result = {}
+    for m in re.finditer(r'"(\w+)"\s*:\s*"((?:[^"\\]|\\.)*)"', s, re.DOTALL):
+        result[m.group(1)] = m.group(2)
+    return result if result else None
+
+
 def parse_json(raw: str):
     """
     Robustly extract a JSON object or array from an LLM response.
     Strips markdown fences, finds the first { or [ and parses from there.
+    Falls back through three sanitization tiers before giving up.
     """
     # Strip markdown code fences
     clean = re.sub(r"```(?:json)?|```", "", raw).strip()
@@ -55,7 +100,26 @@ def parse_json(raw: str):
 
     start = min(candidates)
     clean = clean[start:]
-    return json.loads(clean)
+
+    # Tier 1: standard parse
+    try:
+        return json.loads(clean)
+    except json.JSONDecodeError:
+        pass
+
+    # Tier 2: fix literal control chars + invalid escape sequences
+    try:
+        sanitized = _fix_invalid_escapes(_fix_literal_control_chars(clean))
+        return json.loads(sanitized)
+    except json.JSONDecodeError:
+        pass
+
+    # Tier 3: regex field extraction (handles unescaped quotes in values)
+    extracted = _extract_fields_regex(clean)
+    if extracted:
+        return extracted
+
+    raise ValueError(f"All JSON parse strategies failed for response:\n{raw[:300]}")
 
 
 def safe_parse_json(raw: str, fallback):
