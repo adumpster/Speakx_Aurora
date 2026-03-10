@@ -2,19 +2,46 @@
 # ─────────────────────────────────────────────────────────────
 # Generates: message_templates.csv
 #
-# Creates exactly 5 templates per Segment × Lifecycle × Goal × Theme
-# combination. Each template has bilingual content (Hindi + English),
-# a tone, an Octolysis hook, and a feature reference.
+# Creates exactly 5 templates per Segment × Phase × Theme.
+# Each template has bilingual content (English + Hindi/Hinglish),
+# a tone, an Octolysis hook type, a CTA, and a feature reference.
+#
+# Architecture:
+#   - Phase-aware: operates on segment × phase from comm_themes + goals
+#   - feature_ref resolved from feature_goal_map.json (domain-agnostic)
+#   - Transcreation prompt: Hindi is NOT a literal translation — same
+#     psychological urgency in natural conversational Hindi
+#   - Concurrent via concurrent.futures.ThreadPoolExecutor (max 2 threads)
+#   - Retry logic: up to 3 attempts per combination before fallback
+#   - No LangChain — pure llm.py + safe_parse_json
+#
+# Inputs (all auto-loaded if not passed):
+#   communication_themes.csv  → segment × phase themes + tones
+#   segment_goals.csv         → primary_goal per segment × phase
+#   feature_goal_map.json     → goal → feature reference mapping
+#
+# Output:
+#   message_templates.csv     → 5 rows per segment × phase
 # ─────────────────────────────────────────────────────────────
 
+import os
+import json
+import re
 import pandas as pd
-from llm import llm, safe_parse_json, save_csv
-from data_loader import load_data, add_derived_signals
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Optional
+
+from llm         import llm, safe_parse_json, save_csv
+from data_loader import load_data
 from kb_loader   import load_kb
-from config import OCTOLYSIS_DRIVES
+from config      import OCTOLYSIS_DRIVES
 
 TEMPLATES_PER_COMBO = 5
+MAX_RETRIES         = 3
+MAX_WORKERS         = 2
 
+
+# ── Helpers ───────────────────────────────────────────────────
 
 def _drives_reference() -> str:
     return "\n".join(
@@ -23,171 +50,412 @@ def _drives_reference() -> str:
     )
 
 
+def _load_feature_map(feature_goal_map_path: str = "feature_goal_map.json") -> dict:
+    """
+    Load goal → feature label mapping from feature_goal_map.json.
+    Returns a plain dict {goal_keyword: feature_label}.
+    Falls back to an empty dict — feature_ref will default to 'general'.
+    """
+    if not os.path.exists(feature_goal_map_path):
+        return {}
+    with open(feature_goal_map_path, encoding="utf-8") as f:
+        raw = json.load(f)
+
+    # feature_goal_map.json has structure: {"feature_goal_map": [{feature, primary_goal, ...}]}
+    # Build a reverse lookup: primary_goal substring → feature label
+    mapping = {}
+    entries = raw if isinstance(raw, list) else raw.get("feature_goal_map", raw)
+    if isinstance(entries, list):
+        for entry in entries:
+            feature = entry.get("feature", entry.get("feature_id", "general"))
+            goal    = entry.get("primary_goal", "")
+            if goal:
+                # Use first 40 chars of goal as a loose key for matching
+                mapping[goal[:40].lower()] = feature
+    elif isinstance(entries, dict):
+        mapping = entries
+    return mapping
+
+
+def _resolve_feature_ref(primary_goal: str, feature_map: dict) -> str:
+    """
+    Match primary_goal against feature_map keys via substring search.
+    Returns the feature label or 'general' if no match.
+    """
+    goal_lower = primary_goal.lower()
+    for key, label in feature_map.items():
+        if key in goal_lower or goal_lower[:40] in key:
+            return label
+    return "general"
+
+
+def _unwrap_list(parsed) -> list:
+    """Unwrap LLM output that may be a dict wrapping a list."""
+    if isinstance(parsed, list):
+        return parsed
+    if isinstance(parsed, dict):
+        for key in ["templates", "variations", "messages", "items", "data", "notifications"]:
+            if key in parsed and isinstance(parsed[key], list):
+                return parsed[key]
+    return []
+
+
+def _make_template_id(segment_id: str, phase_name: str, idx: int) -> str:
+    safe_phase = re.sub(r"[^A-Za-z0-9]", "_", str(phase_name)).upper()
+    return f"TPL_{segment_id}_{safe_phase}_{idx:02d}"
+
+
+# ── Fallback row ──────────────────────────────────────────────
+
+def _fallback_row(
+    segment_id:    str,
+    segment_name:  str,
+    lifecycle:     str,
+    phase_number:  int,
+    phase_name:    str,
+    day_range:     str,
+    primary_goal:  str,
+    primary_theme: str,
+    tone:          str,
+    feature_ref:   str,
+    idx:           int,
+) -> dict:
+    return {
+        "template_id":   _make_template_id(segment_id, phase_name, idx),
+        "segment_id":    segment_id,
+        "segment_name":  segment_name,
+        "lifecycle_stage": lifecycle,
+        "phase_number":  phase_number,
+        "phase_name":    phase_name,
+        "day_range":     day_range,
+        "primary_goal":  primary_goal,
+        "theme":         primary_theme,
+        "tone":          tone,
+        "title_en":      "Keep going — your progress awaits!",
+        "body_en":       "You're making great strides. One session today keeps your streak alive.",
+        "title_hi":      "Chalo aage badho!",
+        "body_hi":       "Tumhari mehnat rang la rahi hai. Aaj ek session karo, streak bachao.",
+        "hook_type":     primary_theme,
+        "cta_en":        "Start Now",
+        "cta_hi":        "Abhi Shuru Karo",
+        "feature_ref":   feature_ref,
+        "journey_day":   "D1",
+        "iteration":     0,
+    }
+
+
+# ── Core LLM call with retry ──────────────────────────────────
+
 def _gen_templates_for_combo(
     segment_id:    str,
     segment_name:  str,
     lifecycle:     str,
+    phase_number:  int,
+    phase_name:    str,
+    day_range:     str,
     primary_goal:  str,
+    sub_goal_1:    str,
     primary_theme: str,
+    secondary_theme: str,
     tone:          str,
+    feature_ref:   str,
     combo_index:   int,
 ) -> list[dict]:
     """
-    One LLM call → exactly 5 message template rows for a given combination.
+    One llm() call (up to MAX_RETRIES) → exactly 5 template rows.
+    Hindi is transcreated — same psychological urgency, natural conversational tone.
     """
-    raw = llm(
-        system="You are a multilingual notification copywriter for an EdTech app. Output ONLY valid JSON.",
-        prompt=f"""
-App context (from Knowledge Bank):
-{load_kb()}
+    drives_block = _drives_reference()
+    kb_context   = load_kb()
 
-Segment       : {segment_name} (id: {segment_id})
-Lifecycle     : {lifecycle}
-Primary goal  : {primary_goal}
-Primary theme : {primary_theme}
-Tone          : {tone}
+    prompt_text = f"""
+APP KNOWLEDGE BANK:
+{kb_context}
+
+=== COMBINATION CONTEXT ===
+Segment        : {segment_name} (id: {segment_id})
+Lifecycle      : {lifecycle}
+Phase          : {phase_name} ({day_range})
+Primary Goal   : {primary_goal}
+Sub Goal       : {sub_goal_1}
+Primary Theme  : {primary_theme}
+Secondary Theme: {secondary_theme}
+Tone           : {tone}
+Feature Focus  : {feature_ref}
 
 Octolysis 8 Core Drives reference:
-{_drives_reference()}
+{drives_block}
 
-Generate EXACTLY 5 unique notification templates for this combination.
-Each template must differ in hook type, format, and approach.
-Templates should show gradual journey progression (early → mid → late engagement).
+=== TASK ===
+Write EXACTLY 5 distinct push notification templates for this segment × phase.
 
-Return ONLY valid JSON array (no wrapping object):
+RULES:
+1. Each of the 5 must use a DIFFERENT Octolysis hook_type from the drives above.
+2. Distribute journey_day logically across the phase: {day_range}.
+3. English: short, punchy, action-oriented. Title ≤ 8 words. Body ≤ 20 words. CTA ≤ 4 words.
+4. Hindi/Hinglish: TRANSCREATE — do NOT translate literally. Keep identical psychological
+   urgency but use natural, conversational Hindi that an Indian professional/student
+   would actually respond to. Roman+Devanagari Hinglish is encouraged.
+5. No emojis. No generic filler. Every line must earn its place.
+6. Reflect the phase goal and tone in every template.
+
+Return ONLY a valid JSON array of exactly 5 objects — no wrapper, no explanation:
 [
   {{
-    "template_id": "{segment_id}_{lifecycle}_T{combo_index:03d}_1",
-    "title_en":    "<notification title in English — max 8 words>",
-    "body_en":     "<notification body in English — max 20 words>",
-    "title_hi":    "<notification title in Hindi — max 8 words>",
-    "body_hi":     "<notification body in Hindi — max 20 words>",
-    "hook_type":   "<Octolysis drive name used>",
-    "cta_en":      "<call-to-action in English — max 4 words>",
-    "cta_hi":      "<call-to-action in Hindi — max 4 words>",
-    "feature_ref": "<ai_tutor|leaderboard|progress|streak|coins|general>",
-    "journey_day": "<D0|D1|D2|D3-D5|D6-D7>"
+    "title_en":  "<English title — max 8 words>",
+    "body_en":   "<English body — max 20 words>",
+    "cta_en":    "<English CTA — max 4 words>",
+    "title_hi":  "<Transcreated Hindi/Hinglish title>",
+    "body_hi":   "<Transcreated Hindi/Hinglish body>",
+    "cta_hi":    "<Hindi CTA — max 4 words>",
+    "hook_type": "<exact Octolysis drive name>",
+    "feature_ref": "<{feature_ref} or most relevant feature>",
+    "journey_day": "<specific day within {day_range}>"
   }}
-]
-Generate all 5 entries in the array above."""
-    )
+]"""
 
-    parsed = safe_parse_json(raw, fallback=[])
+    valid_themes = {d["name"] for d in OCTOLYSIS_DRIVES}
 
-    # Unwrap if LLM wrapped in an object
-    if isinstance(parsed, dict):
-        for key in ["templates", "messages", "items", "data"]:
-            if key in parsed and isinstance(parsed[key], list):
-                parsed = parsed[key]
-                break
-        else:
-            parsed = []
+    for attempt in range(1, MAX_RETRIES + 1):
+        raw    = llm(system="You are a bilingual push notification copywriter. Output ONLY valid JSON.", prompt=prompt_text)
+        parsed = safe_parse_json(raw, fallback=[])
+        items  = _unwrap_list(parsed)
 
-    if not isinstance(parsed, list):
-        parsed = []
+        if len(items) >= TEMPLATES_PER_COMBO:
+            break
+        if attempt < MAX_RETRIES:
+            print(f"    [retry {attempt}/{MAX_RETRIES}] got {len(items)} templates, need {TEMPLATES_PER_COMBO}")
 
     rows = []
-    for t_idx, t in enumerate(parsed[:TEMPLATES_PER_COMBO], 1):
+    for t_idx, t in enumerate(items[:TEMPLATES_PER_COMBO], 1):
         if not isinstance(t, dict):
             continue
+        hook = t.get("hook_type", primary_theme)
+        if hook not in valid_themes:
+            hook = primary_theme
         rows.append({
-            "template_id":   t.get("template_id", f"{segment_id}_{lifecycle}_T{combo_index:03d}_{t_idx}"),
-            "segment_id":    segment_id,
-            "segment_name":  segment_name,
-            "lifecycle_stage": lifecycle,
-            "primary_goal":  primary_goal,
-            "theme":         primary_theme,
-            "tone":          tone,
-            "title_en":      t.get("title_en", ""),
-            "body_en":       t.get("body_en", ""),
-            "title_hi":      t.get("title_hi", ""),
-            "body_hi":       t.get("body_hi", ""),
-            "hook_type":     t.get("hook_type", primary_theme),
-            "cta_en":        t.get("cta_en", "Start now"),
-            "cta_hi":        t.get("cta_hi", "अभी शुरू करें"),
-            "feature_ref":   t.get("feature_ref", "general"),
-            "journey_day":   t.get("journey_day", "D0"),
-            "iteration":     0,
-        })
-
-    # Pad to exactly TEMPLATES_PER_COMBO if LLM returned fewer
-    while len(rows) < TEMPLATES_PER_COMBO:
-        t_idx = len(rows) + 1
-        rows.append({
-            "template_id":     f"{segment_id}_{lifecycle}_T{combo_index:03d}_{t_idx}",
+            "template_id":     _make_template_id(segment_id, phase_name, t_idx),
             "segment_id":      segment_id,
             "segment_name":    segment_name,
             "lifecycle_stage": lifecycle,
+            "phase_number":    phase_number,
+            "phase_name":      phase_name,
+            "day_range":       day_range,
             "primary_goal":    primary_goal,
             "theme":           primary_theme,
             "tone":            tone,
-            "title_en":        f"Keep learning, {segment_name}!",
-            "body_en":         "Your English journey continues. Practice today and build your streak.",
-            "title_hi":        "सीखते रहो!",
-            "body_hi":         "आपकी अंग्रेजी यात्रा जारी है। आज अभ्यास करें।",
-            "hook_type":       primary_theme,
-            "cta_en":          "Practice Now",
-            "cta_hi":          "अभ्यास करें",
-            "feature_ref":     "general",
-            "journey_day":     "D0",
+            "title_en":        t.get("title_en", ""),
+            "body_en":         t.get("body_en", ""),
+            "cta_en":          t.get("cta_en", "Start Now"),
+            "title_hi":        t.get("title_hi", ""),
+            "body_hi":         t.get("body_hi", ""),
+            "cta_hi":          t.get("cta_hi", "Abhi Shuru Karo"),
+            "hook_type":       hook,
+            "feature_ref":     t.get("feature_ref", feature_ref),
+            "journey_day":     t.get("journey_day", "D1"),
             "iteration":       0,
         })
+
+    # Pad to exactly 5 with fallback rows if LLM fell short after retries
+    while len(rows) < TEMPLATES_PER_COMBO:
+        rows.append(_fallback_row(
+            segment_id, segment_name, lifecycle, phase_number,
+            phase_name, day_range, primary_goal, primary_theme,
+            tone, feature_ref, len(rows) + 1,
+        ))
 
     return rows
 
 
+# ── ThreadPool worker ─────────────────────────────────────────
+
+def _worker(idx: int, job: dict) -> tuple[int, list[dict]]:
+    """Wrapper so ThreadPoolExecutor can call _gen_templates_for_combo."""
+    templates = _gen_templates_for_combo(**{k: v for k, v in job.items() if k != "combo_index"},
+                                         combo_index=job["combo_index"])
+    return idx, templates
+
+
+# ── Main entry point ──────────────────────────────────────────
+
 def gen_message_templates(
-    themes_df:        pd.DataFrame = None,
-    goals_df:         pd.DataFrame = None,
-    user_segments_df: pd.DataFrame = None,
-    df:               pd.DataFrame = None,
-    output_dir: str = None,
+    themes_df:        Optional[pd.DataFrame] = None,
+    goals_df:         Optional[pd.DataFrame] = None,
+    user_segments_df: Optional[pd.DataFrame] = None,
+    df:               Optional[pd.DataFrame] = None,
+    feature_goal_map: Optional[dict]         = None,
+    output_dir:       Optional[str]          = None,
+    max_workers:      int                    = MAX_WORKERS,
 ) -> pd.DataFrame:
     """
-    Build message_templates.csv — 5 templates per Segment × Lifecycle × Theme.
+    Build message_templates.csv — 5 templates per Segment × Phase.
 
     Args:
-        themes_df        : output of gen_communication_themes (optional)
-        goals_df         : output of gen_segment_goals (optional)
-        user_segments_df : output of gen_user_segments (optional)
-        df               : raw behavioral DataFrame (optional)
-        output_dir       : override output directory (optional)
+        themes_df        : output of gen_communication_themes (comm_themes.csv)
+        goals_df         : output of gen_segment_goals (segment_goals.csv)
+        user_segments_df : output of gen_user_segments (user_segments.csv)
+        df               : raw behavioral DataFrame
+        feature_goal_map : loaded feature_goal_map.json (auto-loaded if None)
+        output_dir       : output directory override
+        max_workers      : concurrent Ollama threads (default 2)
     """
     print("\n[Task2-2/4] Generating: message_templates.csv")
 
     if df is None:
         df = load_data()
 
-    # Ensure themes are available
+    # ── Load communication themes ─────────────────────────────
     if themes_df is None:
-        from comm_themes import gen_communication_themes
-        themes_df = gen_communication_themes(user_segments_df, None, df, output_dir)
+        themes_path = "communication_themes.csv"
+        if os.path.exists(themes_path):
+            themes_df = pd.read_csv(themes_path)
+        else:
+            from comm_themes import gen_communication_themes
+            themes_df = gen_communication_themes(
+                user_segments_df=user_segments_df, df=df, output_dir=output_dir
+            )
 
-    # Merge in primary_goal from goals_df if available
+    # ── Load segment goals ────────────────────────────────────
+    if goals_df is None:
+        goals_path = "segment_goals.csv"
+        if os.path.exists(goals_path):
+            goals_df = pd.read_csv(goals_path)
+
+    # ── Load feature map ──────────────────────────────────────
+    if feature_goal_map is None:
+        feature_goal_map = _load_feature_map("feature_goal_map.json")
+
+    # ── Merge primary_goal + sub_goal_1 from goals if available ──
+    # comm_themes already has primary_goal, but goals has richer sub-goals
     if goals_df is not None:
-        goal_lookup = goals_df[["segment_id", "lifecycle_stage", "primary_goal"]].drop_duplicates()
-        themes_df = themes_df.merge(goal_lookup, on=["segment_id", "lifecycle_stage"], how="left")
-    else:
-        themes_df["primary_goal"] = "Drive daily practice"
+        goal_cols = ["segment_id", "phase_name", "primary_goal", "sub_goal_1"]
+        available = [c for c in goal_cols if c in goals_df.columns]
+        goal_lookup = goals_df[available].drop_duplicates(subset=["segment_id", "phase_name"])
 
-    themes_df["primary_goal"] = themes_df["primary_goal"].fillna("Drive daily practice")
+        merge_on = ["segment_id"]
+        if "phase_name" in themes_df.columns and "phase_name" in goal_lookup.columns:
+            merge_on.append("phase_name")
 
-    all_rows = []
-    total    = len(themes_df)
+        themes_df = themes_df.merge(goal_lookup, on=merge_on, how="left", suffixes=("", "_goal"))
 
+        # Prefer goal file's primary_goal over themes if both exist
+        if "primary_goal_goal" in themes_df.columns:
+            themes_df["primary_goal"] = themes_df["primary_goal_goal"].fillna(
+                themes_df.get("primary_goal", "Drive daily engagement")
+            )
+            themes_df.drop(columns=["primary_goal_goal"], inplace=True)
+
+    if "primary_goal" not in themes_df.columns:
+        themes_df["primary_goal"] = "Drive daily engagement"
+    themes_df["primary_goal"] = themes_df["primary_goal"].fillna("Drive daily engagement")
+
+    if "sub_goal_1" not in themes_df.columns:
+        themes_df["sub_goal_1"] = ""
+    themes_df["sub_goal_1"] = themes_df["sub_goal_1"].fillna("")
+
+    # ── Normalise column names (tone col differs between versions) ─
+    if "tone" in themes_df.columns and "tone_preference" not in themes_df.columns:
+        themes_df.rename(columns={"tone": "tone_preference"}, inplace=True)
+    if "tone_preference" not in themes_df.columns:
+        themes_df["tone_preference"] = "Motivational"
+
+    if "secondary_theme" not in themes_df.columns:
+        themes_df["secondary_theme"] = themes_df.get("primary_theme", "Accomplishment")
+
+    total = len(themes_df)
+    print(f"  {total} segment × phase combinations → {total * TEMPLATES_PER_COMBO} templates total\n")
+
+    # ── Build job list ────────────────────────────────────────
+    jobs = []
     for combo_idx, (_, row) in enumerate(themes_df.iterrows(), 1):
-        sid    = row["segment_id"]
-        sname  = row["segment_name"]
-        stage  = row["lifecycle_stage"]
-        goal   = row["primary_goal"]
-        theme  = row["primary_theme"]
-        tone   = row["tone"]
+        sid        = str(row["segment_id"])
+        feature_ref = _resolve_feature_ref(str(row["primary_goal"]), feature_goal_map)
+        jobs.append({
+            "segment_id":      sid,
+            "segment_name":    str(row.get("segment_name", sid)),
+            "lifecycle":       str(row.get("lifecycle_stage", "")),
+            "phase_number":    int(row.get("phase_number", 0)),
+            "phase_name":      str(row.get("phase_name", "")),
+            "day_range":       str(row.get("day_range", "")),
+            "primary_goal":    str(row["primary_goal"]),
+            "sub_goal_1":      str(row["sub_goal_1"]),
+            "primary_theme":   str(row.get("primary_theme", "")),
+            "secondary_theme": str(row.get("secondary_theme", "")),
+            "tone":            str(row["tone_preference"]),
+            "feature_ref":     feature_ref,
+            "combo_index":     combo_idx,
+        })
 
-        print(f"  [{combo_idx}/{total}] {sid} × {stage} × {theme} → 5 templates")
+    # ── Concurrent execution ──────────────────────────────────
+    results_map: dict[int, list] = {}
 
-        templates = _gen_templates_for_combo(sid, sname, stage, goal, theme, tone, combo_idx)
-        all_rows.extend(templates)
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(_worker, idx, job): idx for idx, job in enumerate(jobs)}
+        completed = 0
+        for future in as_completed(futures):
+            idx = futures[future]
+            job = jobs[idx]
+            try:
+                _, templates = future.result()
+                results_map[idx] = templates
+                completed += 1
+                print(f"  [{completed}/{total}] ✓ {job['segment_id']} | {job['phase_name']} → {len(templates)} templates")
+            except Exception as e:
+                print(f"  [!] ✗ {job['segment_id']} | {job['phase_name']} — {e}")
+                results_map[idx] = [
+                    _fallback_row(
+                        job["segment_id"], job["segment_name"], job["lifecycle"],
+                        job["phase_number"], job["phase_name"], job["day_range"],
+                        job["primary_goal"], job["primary_theme"],
+                        job["tone"], job["feature_ref"], i,
+                    )
+                    for i in range(1, TEMPLATES_PER_COMBO + 1)
+                ]
+
+    # Reassemble in original order
+    all_rows = []
+    for i in range(len(jobs)):
+        all_rows.extend(results_map.get(i, []))
 
     templates_df = pd.DataFrame(all_rows)
     save_csv(templates_df, "message_templates.csv", output_dir)
     return templates_df
+
+
+# ── Standalone runner ─────────────────────────────────────────
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Message Template Generator — phase-aware, bilingual")
+    parser.add_argument("--themes",      default="communication_themes.csv", help="comm_themes CSV path")
+    parser.add_argument("--goals",       default="segment_goals.csv",        help="segment_goals CSV path")
+    parser.add_argument("--segments",    default="user_segments.csv",        help="user_segments CSV path")
+    parser.add_argument("--feature-map", default="feature_goal_map.json",   help="feature_goal_map JSON path")
+    parser.add_argument("--behavioral",  default="user_behavioral_data.csv", help="behavioral CSV path")
+    parser.add_argument("--output-dir",  default=".",                        help="output directory")
+    parser.add_argument("--workers",     default=2, type=int,                help="max concurrent Ollama threads")
+    args = parser.parse_args()
+
+    themes_df = pd.read_csv(args.themes)   if os.path.exists(args.themes)   else None
+    goals_df  = pd.read_csv(args.goals)    if os.path.exists(args.goals)    else None
+    seg_df    = pd.read_csv(args.segments) if os.path.exists(args.segments) else None
+    beh_df    = pd.read_csv(args.behavioral) if os.path.exists(args.behavioral) else None
+    fmap      = None
+    if os.path.exists(args.feature_map):
+        with open(args.feature_map, encoding="utf-8") as f:
+            fmap = json.load(f)
+
+    os.makedirs(args.output_dir, exist_ok=True)
+
+    out = gen_message_templates(
+        themes_df        = themes_df,
+        goals_df         = goals_df,
+        user_segments_df = seg_df,
+        df               = beh_df,
+        feature_goal_map = fmap,
+        output_dir       = args.output_dir,
+        max_workers      = args.workers,
+    )
+    print(f"\n{len(out)} total template rows written.")
+    print(out[["template_id", "segment_id", "phase_name", "hook_type", "title_en"]].head(10).to_string(index=False))

@@ -116,14 +116,14 @@ def run_step(name: str, profile, out0: str):
         from comm_themes import gen_communication_themes
         user_seg = _df_or_load("user_segments", out0, "user_segments.csv")
         seg_summ = state.get("seg_summary") or None
-        state["themes"] = gen_communication_themes(user_seg, seg_summ, profile.df, out0)
+        state["themes"] = gen_communication_themes(user_seg, seg_summ, df=profile.df, output_dir=out0)
 
     elif name == "templates":
         from message_template_gen import gen_message_templates
         themes   = _df_or_load("themes",        out0, "communication_themes.csv")
         goals    = _df_or_load("goals",         out0, "segment_goals.csv")
         user_seg = _df_or_load("user_segments", out0, "user_segments.csv")
-        state["templates"] = gen_message_templates(themes, goals, user_seg, profile.df, out0)
+        state["templates"] = gen_message_templates(themes, goals, user_seg, profile.df, output_dir=out0)
 
     elif name == "timing":
         from timing_optimizer import gen_timing_recommendations
