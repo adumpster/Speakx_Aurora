@@ -1,0 +1,13 @@
+segment_id,segment_name,recommended_time_window,expected_ctr,expected_engagement,rationale,iteration
+SEG_01,High-Active Power Users,evening,0.215,0.5433,Rank 1 preferred historical window. Strategy: High frequency for habit reinforcement & streaks.,1
+SEG_01,High-Active Power Users,evening,0.215,0.5433,Rank 2 preferred historical window. Strategy: High frequency for habit reinforcement & streaks.,1
+SEG_01,High-Active Power Users,evening,0.215,0.5433,Rank 3 preferred historical window. Strategy: High frequency for habit reinforcement & streaks.,1
+SEG_04,Moderate-Active Feature Enthusiasts,evening,0.1475,0.415,Rank 1 preferred historical window. Strategy: Medium frequency to lower friction and build habit.,1
+SEG_04,Moderate-Active Feature Enthusiasts,evening,0.1475,0.415,Rank 2 preferred historical window. Strategy: Medium frequency to lower friction and build habit.,1
+SEG_06,Moderate-Active Trial Activators,evening,0.08,0.2633,Rank 1 preferred historical window. Strategy: Medium frequency to lower friction and build habit.,1
+SEG_06,Moderate-Active Trial Activators,evening,0.08,0.2633,Rank 2 preferred historical window. Strategy: Medium frequency to lower friction and build habit.,1
+SEG_08,Low-Active At-Risk Paid,evening,0.155,0.47,Rank 1 preferred historical window. Strategy: Low frequency (1 window). High-impact win-back only to prevent uninstalls.,1
+SEG_09,Low-Active Cold Trial,evening,0.07,0.2067,Rank 1 preferred historical window. Strategy: Low frequency (1 window). High-impact win-back only to prevent uninstalls.,1
+SEG_11,Deep Churned,evening,0.175,0.495,Rank 1 preferred historical window. Strategy: Low frequency (1 window). High-impact win-back only to prevent uninstalls.,1
+SEG_12,Inactive High-Propensity,evening,0.0933,0.3,Rank 1 preferred historical window. Strategy: Low frequency (1 window). High-impact win-back only to prevent uninstalls.,1
+SEG_13,Inactive Low-Propensity,evening,0.1,0.3075,Rank 1 preferred historical window. Strategy: Low frequency (1 window). High-impact win-back only to prevent uninstalls.,1

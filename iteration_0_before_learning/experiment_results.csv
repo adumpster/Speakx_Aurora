@@ -1,0 +1,77 @@
+template_id,segment_id,segment_name,lifecycle_stage,phase_name,goal,theme,notification_window,total_sends,total_opens,total_engagements,ctr,engagement_rate,uninstall_rate
+TPL_SEG_01_PREMIUM_AFFIRMATION_01,SEG_01,High-Active Power Users,paid,Premium Affirmation,Increase exercise completion rate by 20%,Epic Meaning,evening,5000,1050,2850,0.2100,0.5700,0.0060
+TPL_SEG_01_PREMIUM_AFFIRMATION_02,SEG_01,High-Active Power Users,paid,Premium Affirmation,Increase exercise completion rate by 20%,Empowerment,morning,5000,900,2400,0.1800,0.4800,0.0090
+TPL_SEG_01_PREMIUM_AFFIRMATION_03,SEG_01,High-Active Power Users,paid,Premium Affirmation,Increase exercise completion rate by 20%,Loss Avoidance,evening,5000,1150,2650,0.2300,0.5300,0.0070
+TPL_SEG_01_SOCIAL___EXPANSION_DRIVE_01,SEG_01,High-Active Power Users,paid,Social & Expansion Drive,Increase Monthly Retention by 10%,Epic Meaning,evening,6000,1260,3300,0.2100,0.5500,0.0055
+TPL_SEG_01_SOCIAL___EXPANSION_DRIVE_02,SEG_01,High-Active Power Users,paid,Social & Expansion Drive,Increase Monthly Retention by 10%,Epic Meaning,morning,6000,1020,2760,0.1700,0.4600,0.0080
+TPL_SEG_01_SOCIAL___EXPANSION_DRIVE_03,SEG_01,High-Active Power Users,paid,Social & Expansion Drive,Increase Monthly Retention by 10%,Empowerment,afternoon,6000,660,1920,0.1100,0.3200,0.0110
+TPL_SEG_01_SOCIAL___EXPANSION_DRIVE_04,SEG_01,High-Active Power Users,paid,Social & Expansion Drive,Increase Monthly Retention by 10%,Loss Avoidance,evening,6000,1380,3060,0.2300,0.5100,0.0065
+TPL_SEG_01_LOYALTY_PROGRAM_ACTIVATION_01,SEG_01,High-Active Power Users,paid,Loyalty Program Activation,Boost Monthly Retention by 10%,Empowerment,evening,4000,840,2200,0.2100,0.5500,0.0050
+TPL_SEG_01_LOYALTY_PROGRAM_ACTIVATION_02,SEG_01,High-Active Power Users,paid,Loyalty Program Activation,Boost Monthly Retention by 10%,Epic Meaning,morning,4000,680,1720,0.1700,0.4300,0.0085
+TPL_SEG_01_LOYALTY_PROGRAM_ACTIVATION_03,SEG_01,High-Active Power Users,paid,Loyalty Program Activation,Boost Monthly Retention by 10%,Loss Avoidance,night,4000,400,1080,0.1000,0.2700,0.0120
+TPL_SEG_01_ADVOCACY___REFERRAL_PROGRAM_01,SEG_01,High-Active Power Users,paid,Advocacy & Referral Program,Drive referral sign-ups,Empowerment,evening,5000,1000,2750,0.2000,0.5500,0.0060
+TPL_SEG_01_ADVOCACY___REFERRAL_PROGRAM_02,SEG_01,High-Active Power Users,paid,Advocacy & Referral Program,Drive referral sign-ups,Epic Meaning,afternoon,5000,550,1600,0.1100,0.3200,0.0100
+TPL_SEG_01_ADVOCACY___REFERRAL_PROGRAM_03,SEG_01,High-Active Power Users,paid,Advocacy & Referral Program,Drive referral sign-ups,Loss Avoidance,morning,5000,850,2250,0.1700,0.4500,0.0075
+TPL_SEG_04_ACTIVATION_NUDGE_01,SEG_04,Casual Learners At Risk,trial,Activation Nudge,Activate first lesson within 48h,Empowerment,morning,8000,880,2640,0.1100,0.3300,0.0130
+TPL_SEG_04_ACTIVATION_NUDGE_02,SEG_04,Casual Learners At Risk,trial,Activation Nudge,Activate first lesson within 48h,Epic Meaning,evening,8000,1200,3440,0.1500,0.4300,0.0090
+TPL_SEG_04_ACTIVATION_NUDGE_03,SEG_04,Casual Learners At Risk,trial,Activation Nudge,Activate first lesson within 48h,Loss Avoidance,afternoon,8000,480,1600,0.0600,0.2000,0.0160
+TPL_SEG_04_HABIT_BUILDING_01,SEG_04,Casual Learners At Risk,trial,Habit Building,Drive 3+ sessions in first week,Empowerment,evening,6000,900,2580,0.1500,0.4300,0.0100
+TPL_SEG_04_HABIT_BUILDING_02,SEG_04,Casual Learners At Risk,trial,Habit Building,Drive 3+ sessions in first week,Epic Meaning,morning,6000,540,1680,0.0900,0.2800,0.0140
+TPL_SEG_04_HABIT_BUILDING_03,SEG_04,Casual Learners At Risk,trial,Habit Building,Drive 3+ sessions in first week,Loss Avoidance,evening,6000,1020,2700,0.1700,0.4500,0.0085
+TPL_SEG_04_CONVERSION_PUSH_01,SEG_04,Casual Learners At Risk,trial,Conversion Push,Convert trial to paid,Empowerment,evening,5000,600,1750,0.1200,0.3500,0.0110
+TPL_SEG_04_CONVERSION_PUSH_02,SEG_04,Casual Learners At Risk,trial,Conversion Push,Convert trial to paid,Loss Avoidance,morning,5000,450,1350,0.0900,0.2700,0.0150
+TPL_SEG_04_CONVERSION_PUSH_03,SEG_04,Casual Learners At Risk,trial,Conversion Push,Convert trial to paid,Epic Meaning,night,5000,250,800,0.0500,0.1600,0.0180
+TPL_SEG_06_RE_ENGAGEMENT_HOOK_01,SEG_06,Disengaged But Paying,paid,Re-engagement Hook,Stop churn in first 7 days,Empowerment,evening,10000,700,2400,0.0700,0.2400,0.0210
+TPL_SEG_06_RE_ENGAGEMENT_HOOK_02,SEG_06,Disengaged But Paying,paid,Re-engagement Hook,Stop churn in first 7 days,Loss Avoidance,morning,10000,500,1800,0.0500,0.1800,0.0260
+TPL_SEG_06_RE_ENGAGEMENT_HOOK_03,SEG_06,Disengaged But Paying,paid,Re-engagement Hook,Stop churn in first 7 days,Epic Meaning,afternoon,10000,300,1000,0.0300,0.1000,0.0310
+TPL_SEG_06_VALUE_DEMONSTRATION_01,SEG_06,Disengaged But Paying,paid,Value Demonstration,Show ROI of subscription,Empowerment,evening,8000,640,2080,0.0800,0.2600,0.0190
+TPL_SEG_06_VALUE_DEMONSTRATION_02,SEG_06,Disengaged But Paying,paid,Value Demonstration,Show ROI of subscription,Epic Meaning,morning,8000,400,1280,0.0500,0.1600,0.0250
+TPL_SEG_06_VALUE_DEMONSTRATION_03,SEG_06,Disengaged But Paying,paid,Value Demonstration,Show ROI of subscription,Loss Avoidance,night,8000,240,640,0.0300,0.0800,0.0330
+TPL_SEG_06_HABIT_RESTART_01,SEG_06,Disengaged But Paying,paid,Habit Restart,Rebuild daily session habit,Empowerment,evening,7000,630,2030,0.0900,0.2900,0.0180
+TPL_SEG_06_HABIT_RESTART_02,SEG_06,Disengaged But Paying,paid,Habit Restart,Rebuild daily session habit,Loss Avoidance,morning,7000,350,1120,0.0500,0.1600,0.0270
+TPL_SEG_06_HABIT_RESTART_03,SEG_06,Disengaged But Paying,paid,Habit Restart,Rebuild daily session habit,Epic Meaning,afternoon,7000,210,560,0.0300,0.0800,0.0290
+TPL_SEG_08_ONBOARDING_WELCOME_01,SEG_08,New Trial Explorers,trial,Onboarding Welcome,Complete onboarding in 24h,Empowerment,morning,6000,840,2640,0.1400,0.4400,0.0080
+TPL_SEG_08_ONBOARDING_WELCOME_02,SEG_08,New Trial Explorers,trial,Onboarding Welcome,Complete onboarding in 24h,Epic Meaning,evening,6000,960,3000,0.1600,0.5000,0.0070
+TPL_SEG_08_ONBOARDING_WELCOME_03,SEG_08,New Trial Explorers,trial,Onboarding Welcome,Complete onboarding in 24h,Loss Avoidance,afternoon,6000,540,1560,0.0900,0.2600,0.0130
+TPL_SEG_08_FEATURE_DISCOVERY_01,SEG_08,New Trial Explorers,trial,Feature Discovery,Try 3 features in first week,Empowerment,evening,5000,750,2250,0.1500,0.4500,0.0075
+TPL_SEG_08_FEATURE_DISCOVERY_02,SEG_08,New Trial Explorers,trial,Feature Discovery,Try 3 features in first week,Epic Meaning,morning,5000,600,1750,0.1200,0.3500,0.0100
+TPL_SEG_08_FEATURE_DISCOVERY_03,SEG_08,New Trial Explorers,trial,Feature Discovery,Try 3 features in first week,Loss Avoidance,evening,5000,850,2500,0.1700,0.5000,0.0065
+TPL_SEG_08_TRIAL_CONVERSION_01,SEG_08,New Trial Explorers,trial,Trial Conversion,Convert to paid before trial ends,Empowerment,evening,4000,560,1720,0.1400,0.4300,0.0090
+TPL_SEG_08_TRIAL_CONVERSION_02,SEG_08,New Trial Explorers,trial,Trial Conversion,Convert to paid before trial ends,Loss Avoidance,morning,4000,440,1280,0.1100,0.3200,0.0110
+TPL_SEG_08_TRIAL_CONVERSION_03,SEG_08,New Trial Explorers,trial,Trial Conversion,Convert to paid before trial ends,Epic Meaning,night,4000,240,760,0.0600,0.1900,0.0150
+TPL_SEG_09_WIN_BACK_HOOK_01,SEG_09,Churned Free Users,churned,Win-back Hook,Re-open app within 7 days,Empowerment,evening,12000,720,2280,0.0600,0.1900,0.0230
+TPL_SEG_09_WIN_BACK_HOOK_02,SEG_09,Churned Free Users,churned,Win-back Hook,Re-open app within 7 days,Loss Avoidance,morning,12000,480,1440,0.0400,0.1200,0.0290
+TPL_SEG_09_WIN_BACK_HOOK_03,SEG_09,Churned Free Users,churned,Win-back Hook,Re-open app within 7 days,Epic Meaning,afternoon,12000,240,720,0.0200,0.0600,0.0340
+TPL_SEG_09_VALUE_REMINDER_01,SEG_09,Churned Free Users,churned,Value Reminder,Show what they are missing,Empowerment,evening,10000,800,2200,0.0800,0.2200,0.0200
+TPL_SEG_09_VALUE_REMINDER_02,SEG_09,Churned Free Users,churned,Value Reminder,Show what they are missing,Epic Meaning,morning,10000,500,1400,0.0500,0.1400,0.0270
+TPL_SEG_09_VALUE_REMINDER_03,SEG_09,Churned Free Users,churned,Value Reminder,Show what they are missing,Loss Avoidance,night,10000,200,500,0.0200,0.0500,0.0380
+TPL_SEG_09_REACTIVATION_OFFER_01,SEG_09,Churned Free Users,churned,Reactivation Offer,Drive trial sign-up,Loss Avoidance,evening,8000,560,1680,0.0700,0.2100,0.0210
+TPL_SEG_09_REACTIVATION_OFFER_02,SEG_09,Churned Free Users,churned,Reactivation Offer,Drive trial sign-up,Empowerment,morning,8000,320,880,0.0400,0.1100,0.0300
+TPL_SEG_09_REACTIVATION_OFFER_03,SEG_09,Churned Free Users,churned,Reactivation Offer,Drive trial sign-up,Epic Meaning,early_morning,8000,240,640,0.0300,0.0800,0.0320
+TPL_SEG_11_ENGAGEMENT_BOOST_01,SEG_11,Moderate Paid Users,paid,Engagement Boost,Increase session frequency to 5x/week,Empowerment,evening,5000,850,2400,0.1700,0.4800,0.0070
+TPL_SEG_11_ENGAGEMENT_BOOST_02,SEG_11,Moderate Paid Users,paid,Engagement Boost,Increase session frequency to 5x/week,Epic Meaning,morning,5000,700,2050,0.1400,0.4100,0.0090
+TPL_SEG_11_ENGAGEMENT_BOOST_03,SEG_11,Moderate Paid Users,paid,Engagement Boost,Increase session frequency to 5x/week,Loss Avoidance,evening,5000,950,2650,0.1900,0.5300,0.0060
+TPL_SEG_11_FEATURE_ADOPTION_01,SEG_11,Moderate Paid Users,paid,Feature Adoption,Drive AI Tutor usage,Empowerment,afternoon,4000,480,1280,0.1200,0.3200,0.0110
+TPL_SEG_11_FEATURE_ADOPTION_02,SEG_11,Moderate Paid Users,paid,Feature Adoption,Drive AI Tutor usage,Epic Meaning,evening,4000,640,1800,0.1600,0.4500,0.0075
+TPL_SEG_11_FEATURE_ADOPTION_03,SEG_11,Moderate Paid Users,paid,Feature Adoption,Drive AI Tutor usage,Loss Avoidance,morning,4000,560,1520,0.1400,0.3800,0.0095
+TPL_SEG_11_STREAK_PROTECTION_01,SEG_11,Moderate Paid Users,paid,Streak Protection,Maintain 7-day streak,Loss Avoidance,evening,3000,540,1560,0.1800,0.5200,0.0055
+TPL_SEG_11_STREAK_PROTECTION_02,SEG_11,Moderate Paid Users,paid,Streak Protection,Maintain 7-day streak,Empowerment,early_morning,3000,360,960,0.1200,0.3200,0.0100
+TPL_SEG_11_STREAK_PROTECTION_03,SEG_11,Moderate Paid Users,paid,Streak Protection,Maintain 7-day streak,Epic Meaning,morning,3000,450,1230,0.1500,0.4100,0.0080
+TPL_SEG_12_REACTIVATION_NUDGE_01,SEG_12,Inactive Trial Users,inactive,Reactivation Nudge,Re-open app in 3 days,Empowerment,evening,9000,810,2700,0.0900,0.3000,0.0130
+TPL_SEG_12_REACTIVATION_NUDGE_02,SEG_12,Inactive Trial Users,inactive,Reactivation Nudge,Re-open app in 3 days,Loss Avoidance,morning,9000,540,1800,0.0600,0.2000,0.0170
+TPL_SEG_12_REACTIVATION_NUDGE_03,SEG_12,Inactive Trial Users,inactive,Reactivation Nudge,Re-open app in 3 days,Epic Meaning,afternoon,9000,360,1080,0.0400,0.1200,0.0200
+TPL_SEG_12_FOMO_TRIGGER_01,SEG_12,Inactive Trial Users,inactive,FOMO Trigger,Create urgency to return,Loss Avoidance,evening,7000,700,2170,0.1000,0.3100,0.0120
+TPL_SEG_12_FOMO_TRIGGER_02,SEG_12,Inactive Trial Users,inactive,FOMO Trigger,Create urgency to return,Empowerment,morning,7000,490,1540,0.0700,0.2200,0.0160
+TPL_SEG_12_FOMO_TRIGGER_03,SEG_12,Inactive Trial Users,inactive,FOMO Trigger,Create urgency to return,Epic Meaning,night,7000,280,700,0.0400,0.1000,0.0220
+TPL_SEG_12_VALUE_SHOWCASE_01,SEG_12,Inactive Trial Users,inactive,Value Showcase,Demonstrate premium value,Epic Meaning,evening,6000,540,1740,0.0900,0.2900,0.0135
+TPL_SEG_12_VALUE_SHOWCASE_02,SEG_12,Inactive Trial Users,inactive,Value Showcase,Demonstrate premium value,Empowerment,early_morning,6000,360,1080,0.0600,0.1800,0.0175
+TPL_SEG_12_VALUE_SHOWCASE_03,SEG_12,Inactive Trial Users,inactive,Value Showcase,Demonstrate premium value,Loss Avoidance,morning,6000,480,1440,0.0800,0.2400,0.0145
+TPL_SEG_13_LAST_CHANCE_RESCUE_01,SEG_13,Churned Paid Users,churned,Last Chance Rescue,Prevent permanent churn,Loss Avoidance,evening,8000,800,2480,0.1000,0.3100,0.0120
+TPL_SEG_13_LAST_CHANCE_RESCUE_02,SEG_13,Churned Paid Users,churned,Last Chance Rescue,Prevent permanent churn,Empowerment,morning,8000,560,1680,0.0700,0.2100,0.0160
+TPL_SEG_13_LAST_CHANCE_RESCUE_03,SEG_13,Churned Paid Users,churned,Last Chance Rescue,Prevent permanent churn,Epic Meaning,afternoon,8000,320,960,0.0400,0.1200,0.0210
+TPL_SEG_13_NOSTALGIA_TRIGGER_01,SEG_13,Churned Paid Users,churned,Nostalgia Trigger,Remind of past achievements,Empowerment,evening,6000,600,1860,0.1000,0.3100,0.0115
+TPL_SEG_13_NOSTALGIA_TRIGGER_02,SEG_13,Churned Paid Users,churned,Nostalgia Trigger,Remind of past achievements,Epic Meaning,morning,6000,480,1440,0.0800,0.2400,0.0140
+TPL_SEG_13_NOSTALGIA_TRIGGER_03,SEG_13,Churned Paid Users,churned,Nostalgia Trigger,Remind of past achievements,Loss Avoidance,evening,6000,660,1980,0.1100,0.3300,0.0100
+TPL_SEG_13_COMEBACK_OFFER_01,SEG_13,Churned Paid Users,churned,Comeback Offer,Drive resubscription,Loss Avoidance,evening,5000,450,1400,0.0900,0.2800,0.0130
+TPL_SEG_13_COMEBACK_OFFER_02,SEG_13,Churned Paid Users,churned,Comeback Offer,Drive resubscription,Empowerment,early_morning,5000,300,900,0.0600,0.1800,0.0175
+TPL_SEG_13_COMEBACK_OFFER_03,SEG_13,Churned Paid Users,churned,Comeback Offer,Drive resubscription,Epic Meaning,night,5000,200,550,0.0400,0.1100,0.0230
