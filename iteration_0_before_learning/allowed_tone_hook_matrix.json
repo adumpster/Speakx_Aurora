@@ -16,66 +16,66 @@
   "hook_taxonomy": [
     {
       "core_drive": "Epic Meaning",
-      "application": "Join the SpeakX community and transform your career with confidence.",
+      "application": "Join the SpeakX community to transform your career with confidence in English.",
       "example_phrases": [
-        "You're one step closer to fluency!",
+        "You're one step closer to a fulfilling career!",
         "Unlock your full potential in English."
       ]
     },
     {
       "core_drive": "Accomplishment",
-      "application": "Congratulations! You've completed 5 lessons. Keep the momentum and reach new heights in your career.",
+      "application": "Complete 5 lessons and keep the momentum going with SpeakX's daily speaking practice!",
       "example_phrases": [
-        "You're crushing it!",
-        "Every small win brings you closer to fluency."
+        "You've completed 3 lessons! Keep pushing forward!",
+        "Every small win counts in your English journey."
       ]
     },
     {
       "core_drive": "Empowerment",
-      "application": "Take control of your English learning journey today. Choose from our expert-led lessons and start achieving your goals.",
+      "application": "Take control of your English learning with SpeakX's personalized coaching and expert guidance.",
       "example_phrases": [
-        "It's time to take the lead!",
-        "Unlock your potential with SpeakX."
+        "It's time to take your English skills to the next level!",
+        "Unlock a world of opportunities with SpeakX."
       ]
     },
     {
       "core_drive": "Ownership",
-      "application": "Your progress is waiting for you. Claim your 50 coins and start spending them on lessons that matter most to you.",
+      "application": "Your progress is yours alone. Track your improvement and celebrate your successes with SpeakX.",
       "example_phrases": [
-        "You own this journey!",
-        "Make every coin count."
+        "You've earned 10 coins! Use them to unlock new features!",
+        "Your hard work is paying off. Keep going!"
       ]
     },
     {
       "core_drive": "Social Influence",
-      "application": "3 friends have joined the SpeakX community this week. Invite more and become part of a supportive network that's changing lives.",
+      "application": "Join the ranks of our 1M+ learners who have transformed their careers with SpeakX.",
       "example_phrases": [
-        "Join the movement!",
-        "Be part of something bigger than yourself."
+        "You're part of a community that's changing lives!",
+        "Be inspired by others who are achieving their English goals."
       ]
     },
     {
       "core_drive": "Scarcity",
-      "application": "Only 2 days left in your trial! Don't miss out on this opportunity to transform your career. Sign up now and start learning.",
+      "application": "Don't miss out on this limited-time offer! Complete your trial and start speaking with SpeakX today.",
       "example_phrases": [
-        "Last chance!",
-        "Don't let this offer slip away."
+        "Only 2 days left in your trial! Don't let it slip away!",
+        "Act now and take the first step towards a fulfilling career."
       ]
     },
     {
       "core_drive": "Unpredictability",
-      "application": "Surprise reward inside today's lesson! You never know what you might discover.",
+      "application": "Surprise reward inside today's lesson! Stay tuned for exciting updates and new features.",
       "example_phrases": [
-        "Something exciting is coming...",
-        "The best is yet to come."
+        "What's in store for you? Find out with SpeakX!",
+        "Every day is a surprise with our daily speaking practice."
       ]
     },
     {
       "core_drive": "Loss Avoidance",
-      "application": "Your 7-day streak is at risk. Don't let it slip away. Stay focused and keep learning.",
+      "application": "Don't let your streak slip away! Stay motivated and keep practicing with SpeakX.",
       "example_phrases": [
-        "Don't give up!",
-        "Stay on track and achieve your goals."
+        "Your 7-day streak is at risk. Don't let it happen!",
+        "Stay on track and keep pushing forward."
       ]
     }
   ],
@@ -86,81 +86,72 @@
         "Motivational",
         "Encouraging"
       ],
-      "disallowed_tones": [
-        "Shaming",
-        "Aggressive sales pressure"
+      "disallowed_tones": [],
+      "primary_drives": [
+        "Epic Meaning",
+        "Accomplishment"
       ],
+      "secondary_drives": [
+        "Empowerment"
+      ],
+      "hook_intensity": "high",
+      "tone_rationale": "To motivate the user to start their journey and make a commitment to learning English."
+    },
+    {
+      "lifecycle_stage": "paid",
+      "allowed_tones": [
+        "Motivational",
+        "Encouraging",
+        "Celebratory"
+      ],
+      "disallowed_tones": [],
       "primary_drives": [
         "Epic Meaning",
         "Accomplishment",
         "Empowerment"
       ],
       "secondary_drives": [
-        "Ownership",
         "Social Influence"
       ],
       "hook_intensity": "high",
-      "tone_rationale": "Motivational language to drive trial engagement and encourage users to take action."
-    },
-    {
-      "lifecycle_stage": "paid",
-      "allowed_tones": [
-        "Informative",
-        "Urgent (mild)"
-      ],
-      "disallowed_tones": [],
-      "primary_drives": [
-        "Epic Meaning",
-        "Accomplishment",
-        "Ownership"
-      ],
-      "secondary_drives": [
-        "Social Influence",
-        "Scarcity"
-      ],
-      "hook_intensity": "medium",
-      "tone_rationale": "Informative language to educate users on the benefits of paid subscription, while using a mild sense of urgency to encourage renewal."
+      "tone_rationale": "To motivate the user to continue their learning journey and celebrate their progress."
     },
     {
       "lifecycle_stage": "churned",
       "allowed_tones": [
-        "Loss Avoidance",
-        "Social Influence"
+        "Empathetic",
+        "Reassuring"
       ],
       "disallowed_tones": [
         "Shaming",
-        "Aggressive sales pressure"
+        "Aggressive"
       ],
       "primary_drives": [
         "Epic Meaning",
-        "Accomplishment",
-        "Ownership"
+        "Accomplishment"
       ],
       "secondary_drives": [
-        "Scarcity",
-        "Unpredictability"
+        "Loss Avoidance"
       ],
-      "hook_intensity": "low",
-      "tone_rationale": "Loss avoidance language to re-engage churned users, while using social influence to encourage them to try again."
+      "hook_intensity": "medium",
+      "tone_rationale": "To re-engage the user and make them feel welcome back to SpeakX."
     },
     {
       "lifecycle_stage": "inactive",
       "allowed_tones": [
-        "Unpredictability",
-        "Social Influence"
+        "Friendly",
+        "Informative"
       ],
       "disallowed_tones": [],
       "primary_drives": [
         "Epic Meaning",
-        "Accomplishment",
-        "Ownership"
+        "Accomplishment"
       ],
       "secondary_drives": [
-        "Scarcity",
-        "Loss Avoidance"
+        "Social Influence"
       ],
-      "hook_intensity": "medium",
-      "tone_rationale": "Unpredictability language to surprise inactive users and encourage them to try again, while using social influence to make the experience more engaging."
+      "hook_intensity": "low",
+      "tone_rationale": "To re-activate the user with a gentle nudge and provide them with useful information."
     }
   ],
   "source": "KB Ethical Communication Guidelines",

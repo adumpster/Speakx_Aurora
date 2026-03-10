@@ -15,10 +15,11 @@ from config import GEN_MODEL, OLLAMA_URL
 
 # ── Core LLM call ─────────────────────────────────────────────
 
-def llm(system: str, prompt: str, temperature: float = 0.3) -> str:
+def llm(system: str, prompt: str, temperature: float = 0.3, timeout: int = 360) -> str:
     """
     Send a prompt to Ollama and return the raw text response.
     Raises on HTTP errors so callers know immediately if Ollama is down.
+    timeout: seconds to wait for a response (default 360 — large prompts need more time).
     """
     payload = {
         "model": GEN_MODEL,
@@ -29,7 +30,7 @@ def llm(system: str, prompt: str, temperature: float = 0.3) -> str:
     resp = requests.post(
         f"{OLLAMA_URL}/api/generate",
         json=payload,
-        timeout=180,
+        timeout=timeout,
     )
     resp.raise_for_status()
     return resp.json().get("response", "")

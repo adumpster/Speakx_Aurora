@@ -11,62 +11,57 @@
       ],
       "primary_goal": "Build daily practice habit; drive W1 Retention and D30 Streak",
       "sub_goals": [
-        "Validate purchase",
-        "Maintain streak"
+        "validate purchase",
+        "milestones"
       ],
-      "north_star_contribution": "Increases Monthly Retention by providing a valuable habit-forming experience",
+      "north_star_contribution": "Increase W1 Retention by 10%",
       "propensity_levers": [
-        "Loss Avoidance",
-        "Social Influence",
-        "Accomplishment"
+        "loss avoidance",
+        "social influence"
       ],
-      "expected_outcome": "Users complete ≥4 sessions/week by end of Day 30"
+      "expected_outcome": "Average user completes ≥4 sessions/week"
     },
     {
       "feature": "Leaderboard",
       "feature_id": "feat_002",
-      "description": "A leaderboard that ranks users based on their exercises completed and fluency score improvement.",
+      "description": "Displays users' progress and ranking on the app's leaderboard",
       "lifecycle_stage": [
         "churned",
         "inactive",
         "paid",
         "trial"
       ],
-      "primary_goal": "Drive engagement and encourage friendly competition among users.",
+      "primary_goal": "Drive engagement and encourage friendly competition among users",
       "sub_goals": [
-        "Increase user retention by providing a sense of accomplishment",
-        "Foster a community of learners who motivate each other to improve"
+        "Increase user retention",
+        "Boost motivation through social comparison"
       ],
-      "north_star_contribution": "Increases Monthly Retention by 2.5% through increased user engagement and motivation",
+      "north_star_contribution": "Increases Monthly Retention by 10%",
       "propensity_levers": [
         "Social Influence",
-        "Unpredictability"
+        "Loss Avoidance"
       ],
-      "expected_outcome": "A 10% increase in user retention among those who view the leaderboard at least once a week"
+      "expected_outcome": "Average engagement time increases by 30 minutes"
     },
     {
       "feature": "Progress Checked",
-      "feature_id": "feat_003",
-      "description": "Users check their progress report within the app.",
+      "description": "Users check their progress report to see how they're doing and what improvements they need to make",
       "lifecycle_stage": [
         "churned",
         "paid",
         "trial"
       ],
-      "primary_goal": "Drive W1 Retention and D30 Streak",
+      "primary_goal": "Re-engage users who are inactive or at risk of churning",
       "sub_goals": [
-        "Validate purchase",
-        "Build daily practice habit"
+        "Trigger one micro-action with zero friction",
+        "Provide a sense of accomplishment and motivation"
       ],
-      "north_star_contribution": "Increases W1 Retention by 3.2% (avg)",
+      "north_star_contribution": "Improves Monthly Retention by re-engaging users",
       "propensity_levers": [
         "Loss Avoidance",
-        "Social Influence"
+        "Unpredictability"
       ],
-      "expected_outcome": {
-        "type": "percentage",
-        "value": 3.2
-      }
+      "expected_outcome": "Increase in user engagement and retention"
     }
   ],
   "generated_at": "2026-03-07",
