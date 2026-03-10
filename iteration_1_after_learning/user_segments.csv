@@ -1,0 +1,62 @@
+segment_id,segment_name,user_id,lifecycle_stage,age_band,region,activeness_score,churn_risk_score,activeness_band,dominant_propensity,dominant_propensity_score
+SEG_01,High-Active Power Users,US_13,paid,25-34,tier2,0.627,0.122,high,leaderboard_viewed,0.96
+SEG_01,High-Active Power Users,US_17,paid,18-24,tier1,0.631,0.131,high,ai_tutor_used,0.812
+SEG_01,High-Active Power Users,US_18,paid,25-34,tier2,0.528,0.103,high,progress_checked,0.88
+SEG_01,High-Active Power Users,US_22,paid,35-44,tier3,0.572,0.083,high,ai_tutor_used,0.92
+SEG_01,High-Active Power Users,US_24,paid,25-34,tier2,0.586,0.145,high,leaderboard_viewed,0.832
+SEG_01,High-Active Power Users,US_25,paid,25-34,tier2,0.81,0.108,high,leaderboard_viewed,0.936
+SEG_01,High-Active Power Users,US_26,paid,25-34,tier2,0.628,0.147,high,leaderboard_viewed,0.82
+SEG_01,High-Active Power Users,US_29,paid,18-24,tier1,0.666,0.142,high,leaderboard_viewed,0.864
+SEG_01,High-Active Power Users,US_30,paid,35-44,tier3,0.601,0.116,high,leaderboard_viewed,0.856
+SEG_01,High-Active Power Users,US_31,paid,18-24,tier1,0.559,0.132,high,leaderboard_viewed,0.82
+SEG_01,High-Active Power Users,US_32,paid,18-24,tier1,0.707,0.086,high,leaderboard_viewed,0.928
+SEG_01,High-Active Power Users,US_35,paid,35-44,tier3,0.565,0.11,high,ai_tutor_used,0.84
+SEG_01,High-Active Power Users,US_36,paid,18-24,tier1,0.599,0.137,high,ai_tutor_used,0.86
+SEG_01,High-Active Power Users,US_39,paid,35-44,tier3,0.654,0.134,high,ai_tutor_used,0.84
+SEG_01,High-Active Power Users,US_41,paid,18-24,tier1,0.664,0.096,high,ai_tutor_used,0.808
+SEG_01,High-Active Power Users,US_49,paid,18-24,tier1,0.499,0.115,high,ai_tutor_used,0.976
+SEG_01,High-Active Power Users,US_50,paid,18-24,tier1,0.616,0.09,high,ai_tutor_used,0.892
+SEG_01,High-Active Power Users,US_59,paid,18-24,tier1,0.529,0.114,high,ai_tutor_used,0.972
+SEG_01,High-Active Power Users,US_60,paid,18-24,tier1,0.526,0.124,high,ai_tutor_used,0.812
+SEG_01,High-Active Power Users,US_61,paid,18-24,tier1,0.624,0.093,high,ai_tutor_used,0.916
+SEG_04,Moderate-Active Feature Enthusiasts,US_1,paid,25-34,tier2,0.458,0.139,moderate,progress_checked,0.86
+SEG_04,Moderate-Active Feature Enthusiasts,US_12,paid,25-34,tier2,0.438,0.13,moderate,leaderboard_viewed,0.892
+SEG_04,Moderate-Active Feature Enthusiasts,US_19,paid,18-24,tier1,0.406,0.097,moderate,leaderboard_viewed,0.88
+SEG_04,Moderate-Active Feature Enthusiasts,US_21,paid,35-44,tier3,0.489,0.109,moderate,leaderboard_viewed,0.932
+SEG_04,Moderate-Active Feature Enthusiasts,US_33,paid,35-44,tier3,0.437,0.118,moderate,ai_tutor_used,0.852
+SEG_04,Moderate-Active Feature Enthusiasts,US_38,paid,18-24,tier1,0.433,0.113,moderate,leaderboard_viewed,0.852
+SEG_04,Moderate-Active Feature Enthusiasts,US_4,paid,18-24,tier1,0.498,0.103,moderate,leaderboard_viewed,0.908
+SEG_04,Moderate-Active Feature Enthusiasts,US_48,paid,18-24,tier1,0.372,0.129,moderate,ai_tutor_used,0.888
+SEG_04,Moderate-Active Feature Enthusiasts,US_52,paid,18-24,tier1,0.388,0.115,moderate,ai_tutor_used,0.872
+SEG_06,Moderate-Active Trial Activators,US_23,trial,18-24,tier1,0.479,0.328,moderate,leaderboard_viewed,0.932
+SEG_06,Moderate-Active Trial Activators,US_27,trial,35-44,tier3,0.433,0.152,moderate,leaderboard_viewed,0.908
+SEG_06,Moderate-Active Trial Activators,US_3,trial,25-34,tier2,0.477,0.113,moderate,leaderboard_viewed,0.804
+SEG_06,Moderate-Active Trial Activators,US_37,trial,18-24,tier1,0.447,0.141,moderate,ai_tutor_used,0.908
+SEG_06,Moderate-Active Trial Activators,US_40,trial,18-24,tier1,0.497,0.128,moderate,leaderboard_viewed,0.904
+SEG_06,Moderate-Active Trial Activators,US_44,trial,18-24,tier1,0.359,0.129,moderate,ai_tutor_used,0.916
+SEG_06,Moderate-Active Trial Activators,US_53,trial,18-24,tier1,0.299,0.151,moderate,leaderboard_viewed,0.88
+SEG_06,Moderate-Active Trial Activators,US_55,trial,18-24,tier1,0.381,0.118,moderate,progress_checked,0.852
+SEG_06,Moderate-Active Trial Activators,US_56,trial,18-24,tier1,0.441,0.104,moderate,ai_tutor_used,0.312
+SEG_06,Moderate-Active Trial Activators,US_6,trial,25-34,tier2,0.322,0.137,moderate,progress_checked,0.944
+SEG_06,Moderate-Active Trial Activators,US_8,trial,25-34,tier2,0.475,0.124,moderate,progress_checked,0.808
+SEG_07,Moderate-Active Trial Fence-Sitters,US_51,trial,18-24,tier1,0.287,0.134,moderate,leaderboard_viewed,0.788
+SEG_09,Low-Active Cold Trial,US_14,trial,35-44,tier3,0.265,0.136,low,leaderboard_viewed,0.848
+SEG_09,Low-Active Cold Trial,US_16,trial,25-34,tier2,0.261,0.147,low,ai_tutor_used,0.276
+SEG_09,Low-Active Cold Trial,US_20,trial,35-44,tier3,0.046,0.393,low,ai_tutor_used,0.096
+SEG_09,Low-Active Cold Trial,US_43,trial,18-24,tier1,0.236,0.155,low,ai_tutor_used,0.948
+SEG_09,Low-Active Cold Trial,US_9,trial,25-34,tier2,0.259,0.102,low,progress_checked,0.948
+SEG_11,Deep Churned,US_15,churned,18-24,tier1,0.021,0.991,low,ai_tutor_used,0.104
+SEG_11,Deep Churned,US_2,churned,25-34,tier2,0.033,0.978,low,progress_checked,0.748
+SEG_11,Deep Churned,US_28,churned,18-24,tier1,0.065,0.745,low,leaderboard_viewed,0.656
+SEG_11,Deep Churned,US_45,churned,18-24,tier3,0.032,0.979,low,leaderboard_viewed,0.704
+SEG_11,Deep Churned,US_47,churned,18-24,tier1,0.061,0.733,low,ai_tutor_used,0.108
+SEG_11,Deep Churned,US_5,churned,25-34,tier2,0.039,0.974,low,ai_tutor_used,0.156
+SEG_11,Deep Churned,US_54,churned,18-24,tier1,0.041,0.972,low,progress_checked,0.76
+SEG_12,Inactive High-Propensity,US_46,inactive,18-24,tier1,0.013,0.991,low,ai_tutor_used,0.712
+SEG_12,Inactive High-Propensity,US_7,inactive,35-44,tier3,0.021,0.986,low,leaderboard_viewed,0.7
+SEG_13,Inactive Low-Propensity,US_10,inactive,35-44,tier3,0.023,0.984,low,ai_tutor_used,0.088
+SEG_13,Inactive Low-Propensity,US_11,inactive,35-44,tier3,0.017,0.989,low,ai_tutor_used,0.056
+SEG_13,Inactive Low-Propensity,US_34,inactive,35-44,tier3,0.038,0.744,low,ai_tutor_used,0.076
+SEG_13,Inactive Low-Propensity,US_42,inactive,18-24,tier1,0.011,0.993,low,ai_tutor_used,0.048
+SEG_13,Inactive Low-Propensity,US_57,inactive,18-24,tier1,0.008,0.995,low,ai_tutor_used,0.024
+SEG_13,Inactive Low-Propensity,US_58,inactive,18-24,tier1,0.01,0.993,low,ai_tutor_used,0.096

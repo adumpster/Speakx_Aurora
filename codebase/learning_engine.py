@@ -34,7 +34,7 @@ from datetime import datetime
 
 
 
-from llm import llm, safe_parse_json, save_csv, save_json
+from llm import llm, safe_parse_json, save_csv
 
 from kb_loader import load_kb
 
@@ -1201,7 +1201,7 @@ def evolve_templates(
 
                     theme_uninstall=("uninstall_rate", "mean"),
 
-                    theme_status=("performance_status", lambda x: x.dropna().mode().iloc[0] if len(x.dropna()) > 0 else "NEUTRAL"),
+                    theme_samples=("template_id", "count") if "template_id" in exp_df.columns else ("ctr", "count"),
 
                 )
 
@@ -1209,7 +1209,23 @@ def evolve_templates(
 
             )
 
+             # Classify aggregated theme performance from aggregated metrics,
+            # so status remains consistent with displayed CTR/ER values.
+            def classify_theme_metrics(ctr_val, eng_val):
+                if pd.isna(ctr_val):
+                    ctr_val = 0
+                if pd.isna(eng_val):
+                    eng_val = 0
+                if ctr_val >= TEMPLATE_THRESHOLDS["GOOD"]["ctr_min"] and eng_val >= TEMPLATE_THRESHOLDS["GOOD"]["engagement_min"]:
+                    return "GOOD"
+                elif ctr_val >= TEMPLATE_THRESHOLDS["NEUTRAL"]["ctr_min"] and eng_val >= TEMPLATE_THRESHOLDS["NEUTRAL"]["engagement_min"]:
+                    return "NEUTRAL"
+                return "BAD"
 
+            exp_by_seg_theme["theme_status"] = exp_by_seg_theme.apply(
+                lambda r: classify_theme_metrics(r.get("theme_ctr", 0), r.get("theme_engagement", 0)),
+                axis=1,
+            )                    
 
             iter1 = iter1.merge(
 
@@ -2150,9 +2166,6 @@ def run_learning_engine(
 
 
 
-    # Save classified experiments
-
-    save_csv(exp_df, "experiment_results_classified.csv", iter1_dir)
 
 
 
@@ -2258,7 +2271,7 @@ def run_learning_engine(
 
     # Copy unchanged files from iter0 → iter1
 
-    for fname in ["user_segments.csv", "segment_goals.csv", "communication_themes.csv"]:
+    for fname in ["user_segments.csv"]:
 
         src = os.path.join(iter0_dir, fname)
 
@@ -2332,9 +2345,9 @@ def run_learning_engine(
 
 
 
-    save_csv(delta_df, "learning_delta_report.csv", iter1_dir)
+    delta_report_dir = os.path.dirname(os.path.normpath(iter0_dir))
 
-    save_json(summary, "learning_summary.json", iter1_dir)
+    save_csv(delta_df, "learning_delta_report.csv", delta_report_dir)
 
 
 

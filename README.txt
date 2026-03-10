@@ -7,24 +7,27 @@ ARCHITECTURE
 Domain-agnostic orchestrator: swap user_behavioral_data.csv + knowledge context
 and the same pipeline produces outputs for any B2C/B2B domain.
 
-No RAG / No Vector DB — context injected directly from CSV statistics into LLM
-prompts. Requires only Ollama running locally.
+No RAG / No Vector DB — context injected directly from CSV statistics and a
+knowledge bank (speakx_kb.txt / knowledge_bank.md) into LLM prompts.
+Requires only Ollama running locally.
 
 FILE STRUCTURE
 ────────────────
-config.py               — All constants (model, paths, thresholds, drives)
-llm.py                  — Ollama wrapper + JSON parsing + file save helpers
-data_loader.py          — CSV loading, schema validation, derived signals, summary
-gen_north_star.py       — Generates company_north_star.json
-gen_feature_goal_map.py — Generates feature_goal_map.json
-gen_tone_hook_matrix.py — Generates allowed_tone_hook_matrix.json
-segmentation_engine.py  — Generates user_segments.csv (MECE, 6-12 segments)
-goal_builder.py         — Generates segment_goals.csv
-comm_themes.py          — Generates communication_themes.csv
-message_template_gen.py — Generates message_templates.csv (5 per combination)
-timing_optimizer.py     — Generates timing_recommendations.csv + schedule.csv
-learning_engine.py      — Task 3: classifies results, learns, outputs Iteration 1
-main.py                 — CLI orchestrator with per-step control
+config.py                — All constants (model, paths, thresholds, drives)
+llm.py                   — Ollama wrapper + JSON parsing + file save helpers
+data_loader.py           — CSV loading, schema validation, derived signals, summary
+kb_loader.py             — Loads and injects knowledge bank context into prompts
+gen_north_star.py        — Generates company_north_star.json
+gen_feature_goal_map.py  — Generates feature_goal_map.json
+gen_tone_hook_matrix.py  — Generates allowed_tone_hook_matrix.json
+segmentation_engine.py   — Generates user_segments.csv (MECE, 6-12 segments)
+goal_builder.py          — Generates segment_goals.csv
+comm_themes.py           — Generates communication_themes.csv
+message_template_gen.py  — Generates message_templates.csv (5 per combination)
+timing_optimizer.py      — Generates timing_recommendations.csv
+notification_scheduler.py— Generates user_notification_schedule.csv
+learning_engine.py       — Task 3: classifies results, learns, outputs Iteration 1
+main.py                  — CLI orchestrator with per-step control
 
 SETUP
 ──────
@@ -70,12 +73,12 @@ iteration_0_before_learning/
   user_notification_schedule.csv
 
 iteration_1_after_learning/
-  message_templates.csv      (improved)
-  timing_recommendations.csv (learned)
-  user_segments.csv
+  message_templates.csv       (improved)
+  timing_recommendations.csv  (learned)
+  user_segments.csv(unchanged)
   user_notification_schedule.csv
   learning_delta_report.csv
-  learning_summary.json
+  
 
 MODELS
 ───────
@@ -86,5 +89,6 @@ DOMAIN AGNOSTICITY
 To use with a different domain:
   1. Replace user_behavioral_data.csv with new domain CSV
      (keep same column schema, or update REQUIRED_COLUMNS in data_loader.py)
-  2. Update company-specific strings in config.py and prompts
-  3. Run python main.py — the system auto-discovers features, segments, goals
+  2. Replace speakx_kb.txt with domain-specific knowledge bank
+  3. Update company-specific strings in config.py 
+  4. Run python main.py — the system auto-discovers features, segments, goals
