@@ -13,15 +13,15 @@ runs fully offline on a local Ollama model.
 
 | Document | Read it for… |
 |----------|--------------|
-| [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) | What Aurora is, the two phases, core principles |
-| [INSTALLATION.md](INSTALLATION.md) | Prerequisites, Ollama + Python setup, troubleshooting |
-| [QUICK_START.md](QUICK_START.md) | Commands, workflows, flags, expected console output |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Data flow, deterministic-vs-LLM split, the learning engine |
-| [APP_STRUCTURE.md](APP_STRUCTURE.md) | Repo layout, module responsibilities, dependency graph |
-| [API_REFERENCE.md](API_REFERENCE.md) | Every public function, signature, and constant |
-| [DATA_FORMATS.md](DATA_FORMATS.md) | Exact schema of every input and output file |
-| [MODELS_DOCUMENTATION.md](MODELS_DOCUMENTATION.md) | The LLM backend, prompting, JSON parsing, reliability |
-| [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) | The whole build in one read |
+| [PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) | What Aurora is, the two phases, core principles |
+| [INSTALLATION.md](docs/INSTALLATION.md) | Prerequisites, Ollama + Python setup, troubleshooting |
+| [QUICK_START.md](docs/QUICK_START.md) | Commands, workflows, flags, expected console output |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Data flow, deterministic-vs-LLM split, the learning engine |
+| [APP_STRUCTURE.md](docs/APP_STRUCTURE.md) | Repo layout, module responsibilities, dependency graph |
+| [API_REFERENCE.md](docs/API_REFERENCE.md) | Every public function, signature, and constant |
+| [DATA_FORMATS.md](docs/DATA_FORMATS.md) | Exact schema of every input and output file |
+| [MODELS_DOCUMENTATION.md](docs/MODELS_DOCUMENTATION.md) | The LLM backend, prompting, JSON parsing, reliability |
+| [IMPLEMENTATION_SUMMARY.md](docs/IMPLEMENTATION_SUMMARY.md) | The whole build in one read |
 
 ---
 
